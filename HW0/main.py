@@ -9,6 +9,28 @@ from robot import Panda
 # parameters
 control_dt = 1. / 240.
 
+#Create Functions 
+def move_to_pose(ee_position, ee_rotz):
+    for i in range (800):
+        panda.move_to_pose(ee_position=ee_position, ee_rotz=ee_rotz, positionGain=0.01)
+        p.stepSimulation()
+        time.sleep(control_dt)  
+    return
+
+def close_gripper():
+    for i in range (300):
+        panda.close_gripper()
+        p.stepSimulation()
+        time.sleep(control_dt)
+    return
+
+def open_gripper():
+    for i in range (300):
+        panda.open_gripper()
+        p.stepSimulation()
+        time.sleep(control_dt)
+    return
+
 # create simulation and place camera
 physicsClient = p.connect(p.GUI)
 p.setGravity(0, 0, -9.81)
@@ -35,23 +57,6 @@ for i in range (200):
     p.stepSimulation()
     time.sleep(control_dt)
 
+
+#LM Output
 # run sequence of position and gripper commands
-for i in range (800):
-    panda.move_to_pose(ee_position=[0.6, -0.2, 0.1], ee_rotz=0., positionGain=0.01)
-    p.stepSimulation()
-    time.sleep(control_dt)
-
-for i in range (800):
-    panda.move_to_pose(ee_position=[0.6, -0.2, 0.02], ee_rotz=0., positionGain=0.01)
-    p.stepSimulation()
-    time.sleep(control_dt)    
-
-for i in range (300):
-    panda.close_gripper()
-    p.stepSimulation()
-    time.sleep(control_dt)
-
-for i in range (800):
-    panda.move_to_pose(ee_position=[0.6, -0.2, 0.4], ee_rotz=np.pi/2, positionGain=0.01)
-    p.stepSimulation()
-    time.sleep(control_dt)  
