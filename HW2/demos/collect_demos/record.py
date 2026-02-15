@@ -9,17 +9,15 @@ from teleop import KeyboardController
 from cameras import ExternalCamera
 import matplotlib.pyplot as plt
 import argparse
+#ok the idea here was to consolidate world setup, but the file only works if its inthe saem folder
+#Future fix possible, but I just wanna get the demo recording working for now, so I'm leaving it as is.
+from setup_world import setup_world, get_features_group, get_score, get_cube_positions
 
-# define the relevant features to extract from the state
-def get_features(robot_position, cube_position, cube_init_position):
-    robot_position = np.array(robot_position)
-    cube_position = np.array(cube_position)
-    cube_init_position = np.array(cube_init_position)
-    features = np.array([np.linalg.norm(robot_position - cube_position), 
-                                abs(cube_position[0] - cube_init_position[0]),
-                                abs(cube_position[1] - cube_init_position[1]),
-                                abs(cube_position[2] - cube_init_position[2])])
-    return features
+# parameters
+control_dt = 1. / 240.
+
+# setup the world
+cubes, panda = setup_world()
 
 # create a parser to set the number of the demonstration
 parser = argparse.ArgumentParser()
@@ -30,35 +28,6 @@ args = parser.parse_args()
 savename = "demos/demo" + str(args.number) + ".json"
 foldername = "demos/images/demo" + str(args.number) + "/"
 os.makedirs(foldername, exist_ok=True)
-
-# parameters
-control_dt = 1. / 240.
-
-# create simulation and place camera
-physicsClient = p.connect(p.GUI)
-p.setGravity(0, 0, -9.81)
-# disable keyboard shortcuts so they do not interfere with keyboard control
-p.configureDebugVisualizer(p.COV_ENABLE_KEYBOARD_SHORTCUTS, 0)
-p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-p.resetDebugVisualizerCamera(cameraDistance=1.0, 
-                                cameraYaw=40.0,
-                                cameraPitch=-30.0, 
-                                cameraTargetPosition=[0.5, 0.0, 0.2])
-
-# load the objects
-urdfRootPath = pybullet_data.getDataPath()
-plane = p.loadURDF(os.path.join(urdfRootPath, "plane.urdf"), basePosition=[0, 0, -0.625])
-table = p.loadURDF(os.path.join(urdfRootPath, "table/table.urdf"), basePosition=[0.5, 0, -0.625])
-# randomize the cube x-y location
-cube_x = np.random.uniform(0.4, 0.6)
-cube_y = np.random.uniform(-0.3, +0.3)
-cube = p.loadURDF(os.path.join(urdfRootPath, "cube_small.urdf"), basePosition=[cube_x, cube_y, 0.025])
-
-# load the robot
-jointStartPositions = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.04, 0.04]
-panda = Panda(basePosition=[0, 0, 0],
-                baseOrientation=p.getQuaternionFromEuler([0, 0, 0]),
-                jointStartPositions=jointStartPositions)
 
 # teleoperation interface
 teleop = KeyboardController()
@@ -74,9 +43,9 @@ external_camera = ExternalCamera(cameraDistance=1.0,
 state = panda.get_state()
 target_position = state["ee-position"]
 target_quaternion = state['ee-quaternion']
-cube_init_position = p.getBasePositionAndOrientation(cube)[0]
+cube_init_positions = get_cube_positions(cubes)
 gripper_open = 1.0
-theta_star = np.array([-1.0, 0.0, 0.0, 1.0])
+theta_star = np.array([.5,0,1])
 
 # main loop
 demo = []
@@ -109,10 +78,10 @@ while True:
         # collect features for logging
         state = panda.get_state()
         robot_position = state["ee-position"]
-        cube_position = p.getBasePositionAndOrientation(cube)[0]
-        features = get_features(robot_position, cube_position, cube_init_position)
+        cube_positions = get_cube_positions(cubes)
+        features = get_features_group(robot_position, cube_init_positions, cube_positions)
         # get the human's score
-        score = score + features @ theta_star
+        score = get_score(features, theta_star)
         # save the features and score
         demo.append(list(features))
         with open(savename, "w") as f:
