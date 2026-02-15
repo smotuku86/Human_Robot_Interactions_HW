@@ -6,53 +6,13 @@ import time
 import json
 from robot import Panda
 from teleop import KeyboardController
-
-# define the relevant features
-# features are (1) robot distance from cube and
-# (2-4) cube distance from initial position in x, y, and z
-def get_features(robot_position, cube_position, cube_init_position):
-    robot_position = np.array(robot_position)
-    cube_position = np.array(cube_position)
-    cube_init_position = np.array(cube_init_position)
-    feature = np.array([np.linalg.norm(robot_position - cube_position), 
-                                abs(cube_position[0] - cube_init_position[0]),
-                                abs(cube_position[1] - cube_init_position[1]),
-                                abs(cube_position[2] - cube_init_position[2])])
-    return feature
-
-# get the score for your choice of theta
-def get_score(feature, theta):
-    theta = np.array(theta)
-    return feature @ theta
+from setup_world import setup_world, get_features_group, get_score, get_cube_positions
 
 # parameters
 control_dt = 1. / 240.
 
-# create simulation and place camera
-physicsClient = p.connect(p.GUI)
-p.setGravity(0, 0, -9.81)
-# disable keyboard shortcuts so they do not interfere with keyboard control
-p.configureDebugVisualizer(p.COV_ENABLE_KEYBOARD_SHORTCUTS, 0)
-p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-p.resetDebugVisualizerCamera(cameraDistance=1.0, 
-                                cameraYaw=40.0,
-                                cameraPitch=-30.0, 
-                                cameraTargetPosition=[0.5, 0.0, 0.2])
-
-# load the objects
-urdfRootPath = pybullet_data.getDataPath()
-plane = p.loadURDF(os.path.join(urdfRootPath, "plane.urdf"), basePosition=[0, 0, -0.625])
-table = p.loadURDF(os.path.join(urdfRootPath, "table/table.urdf"), basePosition=[0.5, 0, -0.625])
-# randomize the cube x-y location
-cube_x = np.random.uniform(0.4, 0.6)
-cube_y = np.random.uniform(-0.3, +0.3)
-cube = p.loadURDF(os.path.join(urdfRootPath, "cube_small.urdf"), basePosition=[cube_x, cube_y, 0.025])
-
-# load the robot
-jointStartPositions = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.04, 0.04]
-panda = Panda(basePosition=[0, 0, 0],
-                baseOrientation=p.getQuaternionFromEuler([0, 0, 0]),
-                jointStartPositions=jointStartPositions)
+# setup the world
+cubes, panda = setup_world()
 
 # teleoperation interface
 teleop = KeyboardController()
@@ -61,12 +21,15 @@ teleop = KeyboardController()
 state = panda.get_state()
 target_position = state["ee-position"]
 target_quaternion = state['ee-quaternion']
-cube_init_position = p.getBasePositionAndOrientation(cube)[0]
+
+cube_init_position = get_cube_positions(cubes)
 
 # set your scoring function parameters
 # values can be between -1 and +1
 # the score is transpose(feature) * theta
-theta = [-1.0, 0, 0, 0]
+# theta = [-1.0, 0, 0, 0] - old
+theta = [0.99049298, 0.14766348, 0.31938759] #got from Metropolis Hastings - optimized theta from learn_theta.py 
+theta = [1, 0.46424706, 0.0973374]
 
 # main loop
 last_press = time.time()
@@ -89,8 +52,8 @@ while True:
     if action[7] == +1:
         state = panda.get_state()
         robot_position = state["ee-position"]
-        cube_position = p.getBasePositionAndOrientation(cube)[0]
-        feature = get_features(robot_position, cube_position, cube_init_position)
+        cube_position = get_cube_positions(cubes)
+        feature = get_features_group(robot_position, cube_init_position, cube_position)
         score = get_score(feature, theta)
         print("features are:", np.round(feature, 3))
         print("score is:", np.round(score, 3))
