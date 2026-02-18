@@ -32,7 +32,8 @@ def get_object_goals():
     bottle_state = bottle.get_state()
     #creae a dict with the names of each object - could pass a list in if the objects should not be hardcoded
     goals = {name: {} for name in ["box", "banana", "bottle"]}
-
+    #offsets becasue box state returns centroid of box,
+    # but we want to grab the top of the box
     goals["box"]["position"] = box_state["position"] + np.array([0, 0, 0.05])
     goals["box"]["rotz"] = box_state["euler"][2] + np.pi/2
     goals["banana"]["position"] = banana_state["position"] + np.array([0, 0, -0.01])
@@ -72,12 +73,23 @@ def predict_goal(initial_robot_state, current_robot_state, goals, beta = 1.0):
 
     initial_robot_state = np.array(initial_robot_state)
     current_robot_state = np.array(current_robot_state)
-
+    print("goal keys: ", goals.keys())
     for obj_name in goals.keys():
-        obj_state = np.array(list(goals[obj_name]["position"]) + [goals[obj_name]["rotz"]])
+        #get the current state of selected goal/object
+        obj_state = np.array(list(goals[obj_name]["position"]) )#+ [goals[obj_name]["rotz"]])
 
         #Prediction model - P(theta | robot location)
-        goal_predictions[obj_name] = np.exp( beta * (np.linalg.norm(obj_state - initial_robot_state)) ) / np.exp( beta*np.linalg.norm(current_robot_state-initial_robot_state) + beta*np.linalg.norm(obj_state - current_robot_state) )
+        obj_distance_initial = np.linalg.norm(obj_state - initial_robot_state)
+        obj_distance_current = np.linalg.norm(obj_state - current_robot_state)
+        robot_distance_travelled = np.linalg.norm(current_robot_state - initial_robot_state)
+
+        goal_predictions[obj_name] = np.exp( beta * obj_distance_initial ) / ( np.exp( beta*robot_distance_travelled + beta*obj_distance_current) )
+    
+    #normalize probabilities
+    total = sum(goal_predictions.values())
+    for obj_name in goal_predictions.keys():
+        goal_predictions[obj_name] = goal_predictions[obj_name] / total
+        
     return goal_predictions
 
 
@@ -123,7 +135,7 @@ state = panda.get_state()
 
 init_position = state["ee-position"]
 init_quaternion = state['ee-quaternion']
-init_robot_state = list(init_position) + [init_quaternion[2]]
+init_robot_state = list(init_position) #+ [init_quaternion[2]]
 
 target_position = state["ee-position"]
 target_quaternion = state['ee-quaternion']
@@ -141,7 +153,7 @@ while True:
     state = panda.get_state()
     robot_position = state["ee-position"]
     robot_quaternion = state['ee-quaternion']
-    current_robot_state = list(robot_position) + [robot_quaternion[2]]
+    current_robot_state = list(robot_position) #+ [robot_quaternion[2]]
 
 
     #print("robot position: ", current_robot_state)
@@ -153,9 +165,28 @@ while True:
     goal_predictions = predict_goal(init_robot_state, current_robot_state, goals)
     print("goal predictions: ", goal_predictions)
 
+    #step 2: get robot action to reach each predicted goal
+    object_actions = get_object_actions(robot_position, robot_quaternion, goals)
+    print("object actions: ", object_actions)
+    #find highest probability goal and corresponding robot action
+    best_goal = max(goal_predictions, key=goal_predictions.get)
+    print("best goal: ", best_goal)
+    #choose our robot action
+    robot_action = []
+    if goal_predictions[best_goal] > 0.5: #only assist if we are more than 50% sure of the goal
+        robot_action = object_actions[best_goal]
+        print("assisting toward ", best_goal)
+    else: #stay in position - do not move
+        robot_action = (robot_position, robot_quaternion) 
+        print('idk')
+    print("robot action: ", robot_action)
+
+    #simple alpha of .5 half robot/half human control
+    alpha = 0.5
+    human_action = human_position[0:3]# + action[4] 
     ### to implement: currently we just execute human action ###
-    # action = (1-alpha) * human_action + alpha * robot_action
-    target_position = human_position
+   
+    target_position = (1-alpha) * human_position + alpha * np.array(robot_action[0])
     target_quaternion = human_quaternion
 
     # impose workspace limit
