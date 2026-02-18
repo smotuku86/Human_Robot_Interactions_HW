@@ -22,7 +22,8 @@ class PyBulletObject():
 # see available ycb objects in the folder:
 # objects/ycb_objects
 class YCBObject(PyBulletObject):
-
+    instances = []
     def __init__(self, object_name, basePosition=[0.0, 0.0, 0.0], baseOrientation=[0.0, 0.0, 0.0, 1.0], globalScaling=0.08, useFixedBase=False):
         urdfRootPath = "HW3/objects/ycb_objects/"
         self.object = p.loadURDF(os.path.join(urdfRootPath, object_name), basePosition=basePosition, baseOrientation=baseOrientation, globalScaling=globalScaling, useFixedBase=useFixedBase)
+        YCBObject.instances.append(self)
