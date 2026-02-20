@@ -64,26 +64,41 @@ def action_to_goal(robot_position, robot_euler, goal_position, goal_rotz):
     target_euler = np.array([np.pi, 0, robot_euler[2] + 0.005 * rotz_error])
     return target_position, np.array(p.getQuaternionFromEuler(target_euler))
 
-def predict_goal(initial_robot_state, current_robot_state, goals, beta = 1.0):
+# Find the different between gripper orientation and possible goal orientation
+def angle_diff(a, b):
+    # returns smallest signed angle difference in [-pi, pi]
+    return np.arctan2(np.sin(a - b), np.cos(a - b))
+
+def predict_goal(initial_robot_state, current_robot_state, goals, prior, beta = 5.0, rot_scale = 0.1):
     #predict what object the user is trying to get 
     #Returns a dict with the chance of each object being the goal
     #initial_robot_state and current_robot_state are both lists of length 4, with the first 3 values being the position and the last being rotation around z (euler)
 
     goal_predictions = {}
 
-    initial_robot_state = np.array(initial_robot_state)
-    current_robot_state = np.array(current_robot_state)
-    print("goal keys: ", goals.keys())
+    #get and seperate the position and rotation values for the initial and current robot state
+    initial_robot_state_position = np.array(initial_robot_state[0:3])
+    initial_robot_state_rotz = initial_robot_state[3]
+    current_robot_state_position = np.array(current_robot_state[0:3])
+    current_robot_state_rotz = current_robot_state[3]
+
     for obj_name in goals.keys():
         #get the current state of selected goal/object
-        obj_state = np.array(list(goals[obj_name]["position"]) )#+ [goals[obj_name]["rotz"]])
+        obj_state_position = np.array(list(goals[obj_name]["position"]) )
+        obj_state_rotz = goals[obj_name]["rotz"]
 
-        #Prediction model - P(theta | robot location)
-        obj_distance_initial = np.linalg.norm(obj_state - initial_robot_state)
-        obj_distance_current = np.linalg.norm(obj_state - current_robot_state)
-        robot_distance_travelled = np.linalg.norm(current_robot_state - initial_robot_state)
+        #Prediction model - P(theta | robot location) 
+        #for distance
+        obj_distance_initial = np.linalg.norm(obj_state_position - initial_robot_state_position)
+        obj_distance_current = np.linalg.norm(obj_state_position - current_robot_state_position)
+        robot_distance_travelled = np.linalg.norm(current_robot_state_position - initial_robot_state_position)
 
-        goal_predictions[obj_name] = np.exp( beta * obj_distance_initial ) / ( np.exp( beta*robot_distance_travelled + beta*obj_distance_current) )
+        #for angle error
+        obj_angle_error_current = abs(np.cos(angle_diff(obj_state_rotz, current_robot_state_rotz))) 
+        #checks to see how parallel the robot is to the object - if they are parallel, this value will be 1, if they are perpendicular it will be 0
+        #we want it to be perpendiculer so we can grasp it
+
+        goal_predictions[obj_name] = prior[obj_name] * np.exp( beta * (obj_distance_initial - robot_distance_travelled - obj_distance_current) ) + rot_scale* np.exp( beta * obj_angle_error_current )
     
     #normalize probabilities
     total = sum(goal_predictions.values())
@@ -134,11 +149,13 @@ teleop = KeyboardController()
 state = panda.get_state()
 
 init_position = state["ee-position"]
-init_quaternion = state['ee-quaternion']
-init_robot_state = list(init_position) #+ [init_quaternion[2]]
+init_euler = state['ee-euler']
+init_robot_state = list(init_position) + [init_euler[2]]
 
 target_position = state["ee-position"]
 target_quaternion = state['ee-quaternion']
+
+prior = {"box": 1/3, "banana": 1/3, "bottle": 1/3} # smt to start code off w 
 
 while True:
     # update the target pose
@@ -153,7 +170,8 @@ while True:
     state = panda.get_state()
     robot_position = state["ee-position"]
     robot_quaternion = state['ee-quaternion']
-    current_robot_state = list(robot_position) #+ [robot_quaternion[2]]
+    robot_euler = state['ee-euler']
+    current_robot_state = list(robot_position) + [robot_euler[2]]
 
 
     #print("robot position: ", current_robot_state)
@@ -162,12 +180,14 @@ while True:
     #Step 1: Predict which object the user is trying to get to
     goals = get_object_goals()
     #print("goals: ", goals)
-    goal_predictions = predict_goal(init_robot_state, current_robot_state, goals)
+    goal_predictions = predict_goal(init_robot_state, current_robot_state, goals, prior, beta=1.0, rot_scale=0.0)
+    prior = goal_predictions #update prior for next round of predictions
     print("goal predictions: ", goal_predictions)
 
     #step 2: get robot action to reach each predicted goal
-    object_actions = get_object_actions(robot_position, robot_quaternion, goals)
-    print("object actions: ", object_actions)
+    object_actions = get_object_actions(robot_position, robot_euler, goals)
+    #print("object actions: ", object_actions)
+
     #find highest probability goal and corresponding robot action
     best_goal = max(goal_predictions, key=goal_predictions.get)
     print("best goal: ", best_goal)
@@ -183,11 +203,10 @@ while True:
 
     #simple alpha of .5 half robot/half human control
     alpha = 0.5
-    human_action = human_position[0:3]# + action[4] 
-    ### to implement: currently we just execute human action ###
    
+   # blending human robot control
     target_position = (1-alpha) * human_position + alpha * np.array(robot_action[0])
-    target_quaternion = human_quaternion
+    target_quaternion = (1-alpha) * human_quaternion + alpha * np.array(robot_action[1])
 
     # impose workspace limit
     if target_position[2] < 0.02:
