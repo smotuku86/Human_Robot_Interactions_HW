@@ -5,6 +5,23 @@ import os
 import time
 from robot import Panda
 
+'''
+## Assignment
+
+Modify the provided code in `main.py` to complete the following steps:
+
+1. You can control both robots. Develop a strategy for the robots to efficiently 
+pick up the blocks without collisions. Describe your strategy in words or pseudocode, 
+and then implement it.
+
+2. You can only control one robot. The other robot chooses blocks uniformly at random.
+ Develop a strategy to maximize the overall success of the team, and then implement it. 
+ You may need to try multiple strategies, and then compare them.
+
+3. You can only control one robot. The other robot chooses the block closest to its 
+base 50% of the time, and the other 50% of the time it grasps a random block. Develop
+ and implement a strategy to coordinate with that robot.
+'''
 
 # robot 1 will try to pick up the block numbered action1
 # robot 2 will try to pick up the block numbered action2
@@ -63,6 +80,22 @@ def get_cube_state(cubes, cube_number):
     state["euler"] = p.getEulerFromQuaternion(state["quaternion"])
     return state
 
+def get_cube_distances(cubes, robot):
+    # cubes is a dict of all cubes
+    # robot is the robot object we want to find the distances from
+
+    #returns a dict of the distances of each cube from the robot
+    robot_state = robot.get_state()
+    cube_distances = {}
+    
+    for cube_number in cubes:
+        cube_state = get_cube_state(cubes, cube_number)
+        cube_position = cube_state["position"]
+        robot_position = robot_state["ee-position"]
+        distance = np.linalg.norm(np.array(cube_position) - np.array(robot_position))
+        cube_distances[cube_number] = distance
+    return cube_distances
+    
 # parameters
 control_dt = 1. / 240.
 
@@ -84,14 +117,15 @@ table2 = p.loadURDF(os.path.join(urdfRootPath, "table/table.urdf"), basePosition
 # their initial positions and orientations around the z axis are randomized
 # cubes is a list of objects, each object is a cube
 n_cubes = 5
-cubes = []
+cubes = {}
 for cube_number in range(n_cubes):
     cube_init_position = np.random.uniform([-0.15, -0.3, 0.025], [0.15, 0.3, 0.025], (3,))
     cube_init_angle = np.random.uniform([0, 0, 0], [0, 0, np.pi/2], (3,))
     cube = p.loadURDF(os.path.join(urdfRootPath, "cube_small.urdf"), 
                             basePosition=cube_init_position,
                             baseOrientation=p.getQuaternionFromEuler(cube_init_angle))
-    cubes.append(cube)
+    cubes[cube_number] = cube
+
 
 # load the robots
 jointStartPositions = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.04, 0.04]
@@ -105,13 +139,62 @@ panda2 = Panda(basePosition=[+0.7, 0, 0],
                 jointStartPositions=jointStartPositions)
 
 # main loop
+
+'''
+1.You can control both robots. Develop a strategy for the robots to efficiently 
+pick up the blocks without collisions. Describe your strategy in words or pseudocode, 
+and then implement it.
+
+Find the closest cube to each robot, and assign that cube to that robot. 
+
+If the cubes are too close to each other, make one robot go first, and command the other
+robot to wait until the first robot is done, or find the next closest cube for the second robot
+(runs the same promixity check)
+
+So the pseudocode for this strategy is:
+
+Get the state of environment - cubes and robots
+find the distances of the cubes from each robot
+assign the closest cube to each robot
+run a proximity check 
+reassign cubes if they are too close
+go get the cubes
+
+'''
+
 total_score = [0, 0]
 for iteration in range(10):
 
     # choose which cube each robot should pick up
+    #finds how close each cube is to the robots
+    c2r1_distances = get_cube_distances(cubes, panda1)
+    c2r2_distances = get_cube_distances(cubes, panda2)
+
+    #find the closest cube to each robot
+    #but also sort them incase the two robots are closest to the same cube
+    r1_sorted_cubes = sorted(c2r1_distances, key=c2r1_distances.get)
+    r2_sorted_cubes = sorted(c2r2_distances, key=c2r2_distances.get)
+        #key makes sure the min function compares values of dict, not keys
+        #chosen cube should the key of cubes 
+    #Run a proximity check to see if the cubes are too close to each other
+    
+    while abs(r1_sorted_cubes[0] - r2_sorted_cubes[0]) < .1:
+        #if they are too close, assign one of the robots the next closest cube
+        r2_sorted_cubes = r2_sorted_cubes[1:]
+
+        if len(r2_sorted_cubes) == 0:
+            #means there are no other cubes
+            #tell it to wait
+            r2_sorted_cubes = [-1]
+            break
+    
+    r1_chosen_cube = r1_sorted_cubes[0]
+    r2_chosen_cube = r2_sorted_cubes[0]
+    #now our cubes are chosen
+
     # if the action is -1, the robot will sit out that round
-    action1 = np.random.randint(0, n_cubes)
-    action2 = np.random.randint(0, n_cubes)
+    action1 = r1_chosen_cube
+    action2 = r2_chosen_cube
 
     # robots try to grasp the chosen cubes and lift them
     iteration_score = move_robots(action1, action2)
@@ -124,4 +207,4 @@ for iteration in range(10):
     for cube in cubes:
         cube_init_position = np.random.uniform([-0.15, -0.3, 0.025], [0.15, 0.3, 0.025], (3,))
         cube_init_angle = np.random.uniform([0, 0, 0], [0, 0, np.pi/2], (3,))
-        p.resetBasePositionAndOrientation(cube, cube_init_position, p.getQuaternionFromEuler(cube_init_angle))
+        p.resetBasePositionAndOrientation(cubes[cube], cube_init_position, p.getQuaternionFromEuler(cube_init_angle))
