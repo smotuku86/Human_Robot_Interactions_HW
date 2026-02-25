@@ -153,6 +153,8 @@ go get the cubes
 total_score = [0, 0]
 for iteration in range(10):
 
+    #this is scuffed we assume we know what the random choice is - fix
+    
     # choose which cube each robot should pick up
     # robot 2 is random
     r2_chosen_cube = np.random.randint(0, n_cubes)
