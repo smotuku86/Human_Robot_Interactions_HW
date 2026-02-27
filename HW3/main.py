@@ -69,7 +69,7 @@ def angle_diff(a, b):
     # returns smallest signed angle difference in [-pi, pi]
     return np.arctan2(np.sin(a - b), np.cos(a - b))
 
-def predict_goal(initial_robot_state, current_robot_state, goals, beta = 5.0, rot_scale = 0.1):
+def predict_goal(initial_robot_state, current_robot_state, goals, beta = 1.0, rot_scale = 0.0):
     #predict what object the user is trying to get 
     #Returns a dict with the chance of each object being the goal
     #initial_robot_state and current_robot_state are both lists of length 4, with the first 3 values being the position and the last being rotation around z (euler)
@@ -333,3 +333,5 @@ while True:
     # step simulation
     p.stepSimulation()
     time.sleep(control_dt)
+
+    #chatlog - https://chatgpt.com/share/69994024-965c-8004-854d-57709bec1411 
