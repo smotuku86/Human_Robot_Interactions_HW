@@ -1,0 +1,610 @@
+Data is shown at the end - best result after 2 runs
+
+Strategy 1 was for Robot 1 to always go for whatever it thought Robot 2 was least likely to go for. Cube selection was based on running a 
+distance-based probability calculation and choosing the cube with the smallest probability. Robot 1 scored 40/100 and Robot 2 scored 65/100. 
+This shows that always playing aggressively does not necessarily result in the highest score. I observed several collisions, and almost all 
+of them resulted in at least one (or both) of the robots being unable to score. These cases usually occurred because Robot 2 chose a random 
+cube near Robot 1, and they collided on their first step toward it.
+
+Strategy 2 builds on Strategy 1 but aims for a safer style of play. Two new features were added to the control system.
+The first was a check on cube locations. If the most likely and least likely cubes for Robot 2 are near each other, 
+it is reasonable to assume that all the cubes are clustered closely together. In this case, it is better for Robot 1 
+to sit the round out and allow Robot 2 to attempt to score. The second feature allowed Robot 1 to observe Robot 2’s 
+first move before acting. This was implemented to maintain competitive play while minimizing collisions in the first step.
+By observing during the first step, Robot 1 can also better predict Robot 2’s intended goal. This led to Robot 1 scoring 
+61/100 and Robot 2 scoring 74/100. This was a significant improvement for Robot 1. Collisions occurred far less frequently, 
+although some edge cases still remained (aside from occasional failures to pick up a cube). The two main edge cases observed 
+were situations where Robot 1 would change its goal at the last second or be unable to reach far enough to grasp a cube.
+
+These two strategies show us that employing safety into a control policy that orginally had no safety can improve scores. 
+
+
+Run 1:
+TLDR - after 100 rounds, the score is:  [40, 65]
+pybullet build time: Jan 29 2025 23:16:28
+here is the score from that iteration:  [0, 0]
+after 1 rounds, the score is:  [0, 0]
+here is the score from that iteration:  [0, 0]
+after 2 rounds, the score is:  [0, 0]
+here is the score from that iteration:  [1, 1]
+after 3 rounds, the score is:  [1, 1]
+closest
+here is the score from that iteration:  [0, 1]
+after 4 rounds, the score is:  [1, 2]
+here is the score from that iteration:  [1, 1]
+after 5 rounds, the score is:  [2, 3]
+closest
+here is the score from that iteration:  [1, 1]
+after 6 rounds, the score is:  [3, 4]
+here is the score from that iteration:  [0, 0]
+after 7 rounds, the score is:  [3, 4]
+here is the score from that iteration:  [1, 1]
+after 8 rounds, the score is:  [4, 5]
+closest
+here is the score from that iteration:  [0, 1]
+after 9 rounds, the score is:  [4, 6]
+closest
+here is the score from that iteration:  [0, 1]
+after 10 rounds, the score is:  [4, 7]
+here is the score from that iteration:  [1, 1]
+after 11 rounds, the score is:  [5, 8]
+here is the score from that iteration:  [0, 1]
+after 12 rounds, the score is:  [5, 9]
+here is the score from that iteration:  [0, 0]
+after 13 rounds, the score is:  [5, 9]
+here is the score from that iteration:  [0, 0]
+after 14 rounds, the score is:  [5, 9]
+closest
+here is the score from that iteration:  [0, 1]
+after 15 rounds, the score is:  [5, 10]
+closest
+here is the score from that iteration:  [0, 1]
+after 16 rounds, the score is:  [5, 11]
+closest
+here is the score from that iteration:  [1, 1]
+after 17 rounds, the score is:  [6, 12]
+here is the score from that iteration:  [1, 1]
+after 18 rounds, the score is:  [7, 13]
+closest
+here is the score from that iteration:  [0, 1]
+after 19 rounds, the score is:  [7, 14]
+closest
+here is the score from that iteration:  [1, 1]
+after 20 rounds, the score is:  [8, 15]
+closest
+here is the score from that iteration:  [0, 1]
+after 21 rounds, the score is:  [8, 16]
+here is the score from that iteration:  [0, 0]
+after 22 rounds, the score is:  [8, 16]
+closest
+here is the score from that iteration:  [0, 0]
+after 23 rounds, the score is:  [8, 16]
+closest
+here is the score from that iteration:  [1, 1]
+after 24 rounds, the score is:  [9, 17]
+here is the score from that iteration:  [0, 0]
+after 25 rounds, the score is:  [9, 17]
+closest
+here is the score from that iteration:  [1, 0]
+after 26 rounds, the score is:  [10, 17]
+closest
+here is the score from that iteration:  [1, 1]
+after 27 rounds, the score is:  [11, 18]
+here is the score from that iteration:  [0, 0]
+after 28 rounds, the score is:  [11, 18]
+closest
+here is the score from that iteration:  [1, 1]
+after 29 rounds, the score is:  [12, 19]
+closest
+here is the score from that iteration:  [0, 1]
+after 30 rounds, the score is:  [12, 20]
+closest
+here is the score from that iteration:  [0, 1]
+after 31 rounds, the score is:  [12, 21]
+closest
+here is the score from that iteration:  [1, 1]
+after 32 rounds, the score is:  [13, 22]
+closest
+here is the score from that iteration:  [1, 1]
+after 33 rounds, the score is:  [14, 23]
+here is the score from that iteration:  [0, 0]
+after 34 rounds, the score is:  [14, 23]
+here is the score from that iteration:  [0, 0]
+after 35 rounds, the score is:  [14, 23]
+here is the score from that iteration:  [0, 0]
+after 36 rounds, the score is:  [14, 23]
+closest
+here is the score from that iteration:  [1, 1]
+after 37 rounds, the score is:  [15, 24]
+here is the score from that iteration:  [0, 1]
+after 38 rounds, the score is:  [15, 25]
+here is the score from that iteration:  [1, 0]
+after 39 rounds, the score is:  [16, 25]
+closest
+here is the score from that iteration:  [0, 0]
+after 40 rounds, the score is:  [16, 25]
+here is the score from that iteration:  [0, 1]
+after 41 rounds, the score is:  [16, 26]
+closest
+here is the score from that iteration:  [0, 0]
+after 42 rounds, the score is:  [16, 26]
+closest
+here is the score from that iteration:  [1, 1]
+after 43 rounds, the score is:  [17, 27]
+closest
+here is the score from that iteration:  [0, 1]
+after 44 rounds, the score is:  [17, 28]
+closest
+here is the score from that iteration:  [1, 1]
+after 45 rounds, the score is:  [18, 29]
+here is the score from that iteration:  [1, 1]
+after 46 rounds, the score is:  [19, 30]
+closest
+here is the score from that iteration:  [0, 0]
+after 47 rounds, the score is:  [19, 30]
+closest
+here is the score from that iteration:  [0, 1]
+after 48 rounds, the score is:  [19, 31]
+here is the score from that iteration:  [0, 1]
+after 49 rounds, the score is:  [19, 32]
+here is the score from that iteration:  [0, 1]
+after 50 rounds, the score is:  [19, 33]
+closest
+here is the score from that iteration:  [1, 1]
+after 51 rounds, the score is:  [20, 34]
+here is the score from that iteration:  [1, 1]
+after 52 rounds, the score is:  [21, 35]
+closest
+here is the score from that iteration:  [0, 1]
+after 53 rounds, the score is:  [21, 36]
+closest
+here is the score from that iteration:  [1, 1]
+after 54 rounds, the score is:  [22, 37]
+here is the score from that iteration:  [0, 0]
+after 55 rounds, the score is:  [22, 37]
+closest
+here is the score from that iteration:  [1, 1]
+after 56 rounds, the score is:  [23, 38]
+here is the score from that iteration:  [0, 0]
+after 57 rounds, the score is:  [23, 38]
+here is the score from that iteration:  [0, 1]
+after 58 rounds, the score is:  [23, 39]
+closest
+here is the score from that iteration:  [0, 1]
+after 59 rounds, the score is:  [23, 40]
+closest
+here is the score from that iteration:  [0, 1]
+after 60 rounds, the score is:  [23, 41]
+here is the score from that iteration:  [0, 0]
+after 61 rounds, the score is:  [23, 41]
+here is the score from that iteration:  [0, 0]
+after 62 rounds, the score is:  [23, 41]
+closest
+here is the score from that iteration:  [1, 1]
+after 63 rounds, the score is:  [24, 42]
+closest
+here is the score from that iteration:  [0, 1]
+after 64 rounds, the score is:  [24, 43]
+here is the score from that iteration:  [0, 0]
+after 65 rounds, the score is:  [24, 43]
+closest
+here is the score from that iteration:  [0, 1]
+after 66 rounds, the score is:  [24, 44]
+closest
+here is the score from that iteration:  [0, 1]
+after 67 rounds, the score is:  [24, 45]
+closest
+here is the score from that iteration:  [1, 1]
+after 68 rounds, the score is:  [25, 46]
+here is the score from that iteration:  [0, 1]
+after 69 rounds, the score is:  [25, 47]
+closest
+here is the score from that iteration:  [1, 1]
+after 70 rounds, the score is:  [26, 48]
+closest
+here is the score from that iteration:  [1, 1]
+after 71 rounds, the score is:  [27, 49]
+here is the score from that iteration:  [1, 0]
+after 72 rounds, the score is:  [28, 49]
+here is the score from that iteration:  [1, 0]
+after 73 rounds, the score is:  [29, 49]
+closest
+here is the score from that iteration:  [1, 1]
+after 74 rounds, the score is:  [30, 50]
+here is the score from that iteration:  [0, 0]
+after 75 rounds, the score is:  [30, 50]
+closest
+here is the score from that iteration:  [0, 1]
+after 76 rounds, the score is:  [30, 51]
+here is the score from that iteration:  [0, 0]
+after 77 rounds, the score is:  [30, 51]
+here is the score from that iteration:  [1, 1]
+after 78 rounds, the score is:  [31, 52]
+here is the score from that iteration:  [0, 0]
+after 79 rounds, the score is:  [31, 52]
+closest
+here is the score from that iteration:  [0, 1]
+after 80 rounds, the score is:  [31, 53]
+closest
+here is the score from that iteration:  [0, 1]
+after 81 rounds, the score is:  [31, 54]
+here is the score from that iteration:  [0, 0]
+after 82 rounds, the score is:  [31, 54]
+here is the score from that iteration:  [1, 0]
+after 83 rounds, the score is:  [32, 54]
+here is the score from that iteration:  [0, 0]
+after 84 rounds, the score is:  [32, 54]
+here is the score from that iteration:  [0, 1]
+after 85 rounds, the score is:  [32, 55]
+here is the score from that iteration:  [0, 0]
+after 86 rounds, the score is:  [32, 55]
+closest
+here is the score from that iteration:  [0, 1]
+after 87 rounds, the score is:  [32, 56]
+here is the score from that iteration:  [1, 1]
+after 88 rounds, the score is:  [33, 57]
+here is the score from that iteration:  [1, 1]
+after 89 rounds, the score is:  [34, 58]
+here is the score from that iteration:  [1, 1]
+after 90 rounds, the score is:  [35, 59]
+closest
+here is the score from that iteration:  [0, 1]
+after 91 rounds, the score is:  [35, 60]
+closest
+here is the score from that iteration:  [1, 1]
+after 92 rounds, the score is:  [36, 61]
+closest
+here is the score from that iteration:  [0, 0]
+after 93 rounds, the score is:  [36, 61]
+closest
+here is the score from that iteration:  [1, 1]
+after 94 rounds, the score is:  [37, 62]
+closest
+here is the score from that iteration:  [1, 1]
+after 95 rounds, the score is:  [38, 63]
+here is the score from that iteration:  [0, 0]
+after 96 rounds, the score is:  [38, 63]
+closest
+here is the score from that iteration:  [1, 1]
+after 97 rounds, the score is:  [39, 64]
+closest
+here is the score from that iteration:  [0, 1]
+after 98 rounds, the score is:  [39, 65]
+here is the score from that iteration:  [0, 0]
+after 99 rounds, the score is:  [39, 65]
+here is the score from that iteration:  [1, 0]
+after 100 rounds, the score is:  [40, 65]
+
+Run 2:
+after 100 rounds, the score is:  [61, 74]
+
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 1 rounds, the score is:  [1, 1]
+no action
+here is the score from that iteration:  [1, 1]
+after 2 rounds, the score is:  [2, 2]
+here is the score from that iteration:  [1, 1]
+after 3 rounds, the score is:  [3, 3]
+here is the score from that iteration:  [1, 0]
+after 4 rounds, the score is:  [4, 3]
+closest
+no action
+no action
+here is the score from that iteration:  [1, 1]
+after 5 rounds, the score is:  [5, 4]
+closest
+no action
+here is the score from that iteration:  [0, 0]
+after 6 rounds, the score is:  [5, 4]
+closest
+no action
+here is the score from that iteration:  [0, 0]
+after 7 rounds, the score is:  [5, 4]
+closest
+here is the score from that iteration:  [1, 1]
+after 8 rounds, the score is:  [6, 5]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 9 rounds, the score is:  [7, 6]
+no action
+here is the score from that iteration:  [1, 1]
+after 10 rounds, the score is:  [8, 7]
+closest
+here is the score from that iteration:  [0, 1]
+after 11 rounds, the score is:  [8, 8]
+closest
+no action
+here is the score from that iteration:  [0, 1]
+after 12 rounds, the score is:  [8, 9]
+no action
+no action
+no action
+no action
+here is the score from that iteration:  [0, 1]
+after 13 rounds, the score is:  [8, 10]
+closest
+here is the score from that iteration:  [0, 1]
+after 14 rounds, the score is:  [8, 11]
+closest
+here is the score from that iteration:  [1, 1]
+after 15 rounds, the score is:  [9, 12]
+closest
+here is the score from that iteration:  [0, 0]
+after 16 rounds, the score is:  [9, 12]
+no action
+no action
+here is the score from that iteration:  [0, 1]
+after 17 rounds, the score is:  [9, 13]
+no action
+here is the score from that iteration:  [0, 0]
+after 18 rounds, the score is:  [9, 13]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 19 rounds, the score is:  [10, 14]
+closest
+no action
+here is the score from that iteration:  [0, 1]
+after 20 rounds, the score is:  [10, 15]
+closest
+here is the score from that iteration:  [1, 1]
+after 21 rounds, the score is:  [11, 16]
+no action
+here is the score from that iteration:  [1, 1]
+after 22 rounds, the score is:  [12, 17]
+here is the score from that iteration:  [1, 0]
+after 23 rounds, the score is:  [13, 17]
+closest
+here is the score from that iteration:  [0, 1]
+after 24 rounds, the score is:  [13, 18]
+no action
+here is the score from that iteration:  [1, 1]
+after 25 rounds, the score is:  [14, 19]
+here is the score from that iteration:  [0, 1]
+after 26 rounds, the score is:  [14, 20]
+no action
+here is the score from that iteration:  [1, 0]
+after 27 rounds, the score is:  [15, 20]
+no action
+here is the score from that iteration:  [1, 1]
+after 28 rounds, the score is:  [16, 21]
+here is the score from that iteration:  [0, 1]
+after 29 rounds, the score is:  [16, 22]
+here is the score from that iteration:  [1, 1]
+after 30 rounds, the score is:  [17, 23]
+closest
+no action
+here is the score from that iteration:  [0, 1]
+after 31 rounds, the score is:  [17, 24]
+here is the score from that iteration:  [1, 1]
+after 32 rounds, the score is:  [18, 25]
+closest
+here is the score from that iteration:  [0, 1]
+after 33 rounds, the score is:  [18, 26]
+closest
+here is the score from that iteration:  [1, 1]
+after 34 rounds, the score is:  [19, 27]
+no action
+here is the score from that iteration:  [1, 1]
+after 35 rounds, the score is:  [20, 28]
+closest
+no action
+here is the score from that iteration:  [0, 1]
+after 36 rounds, the score is:  [20, 29]
+closest
+here is the score from that iteration:  [1, 1]
+after 37 rounds, the score is:  [21, 30]
+here is the score from that iteration:  [1, 1]
+after 38 rounds, the score is:  [22, 31]
+closest
+here is the score from that iteration:  [1, 1]
+after 39 rounds, the score is:  [23, 32]
+closest
+no action
+here is the score from that iteration:  [0, 0]
+after 40 rounds, the score is:  [23, 32]
+closest
+here is the score from that iteration:  [1, 0]
+after 41 rounds, the score is:  [24, 32]
+here is the score from that iteration:  [1, 0]
+after 42 rounds, the score is:  [25, 32]
+here is the score from that iteration:  [1, 1]
+after 43 rounds, the score is:  [26, 33]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 44 rounds, the score is:  [27, 34]
+closest
+no action
+here is the score from that iteration:  [0, 0]
+after 45 rounds, the score is:  [27, 34]
+closest
+no action
+no action
+here is the score from that iteration:  [1, 1]
+after 46 rounds, the score is:  [28, 35]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 47 rounds, the score is:  [29, 36]
+closest
+here is the score from that iteration:  [0, 1]
+after 48 rounds, the score is:  [29, 37]
+closest
+no action
+no action
+no action
+no action
+here is the score from that iteration:  [0, 1]
+after 49 rounds, the score is:  [29, 38]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 50 rounds, the score is:  [30, 39]
+here is the score from that iteration:  [1, 1]
+after 51 rounds, the score is:  [31, 40]
+closest
+no action
+here is the score from that iteration:  [0, 1]
+after 52 rounds, the score is:  [31, 41]
+here is the score from that iteration:  [1, 1]
+after 53 rounds, the score is:  [32, 42]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 54 rounds, the score is:  [33, 43]
+closest
+here is the score from that iteration:  [1, 1]
+after 55 rounds, the score is:  [34, 44]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 56 rounds, the score is:  [35, 45]
+here is the score from that iteration:  [1, 0]
+after 57 rounds, the score is:  [36, 45]
+closest
+no action
+no action
+here is the score from that iteration:  [1, 1]
+after 58 rounds, the score is:  [37, 46]
+no action
+here is the score from that iteration:  [0, 0]
+after 59 rounds, the score is:  [37, 46]
+here is the score from that iteration:  [0, 0]
+after 60 rounds, the score is:  [37, 46]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 61 rounds, the score is:  [38, 47]
+here is the score from that iteration:  [1, 0]
+after 62 rounds, the score is:  [39, 47]
+here is the score from that iteration:  [0, 1]
+after 63 rounds, the score is:  [39, 48]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 64 rounds, the score is:  [40, 49]
+here is the score from that iteration:  [1, 1]
+after 65 rounds, the score is:  [41, 50]
+no action
+no action
+here is the score from that iteration:  [0, 1]
+after 66 rounds, the score is:  [41, 51]
+no action
+here is the score from that iteration:  [1, 0]
+after 67 rounds, the score is:  [42, 51]
+closest
+here is the score from that iteration:  [1, 1]
+after 68 rounds, the score is:  [43, 52]
+closest
+here is the score from that iteration:  [0, 1]
+after 69 rounds, the score is:  [43, 53]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 70 rounds, the score is:  [44, 54]
+no action
+here is the score from that iteration:  [1, 1]
+after 71 rounds, the score is:  [45, 55]
+closest
+no action
+here is the score from that iteration:  [0, 1]
+after 72 rounds, the score is:  [45, 56]
+closest
+here is the score from that iteration:  [0, 0]
+after 73 rounds, the score is:  [45, 56]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 74 rounds, the score is:  [46, 57]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 75 rounds, the score is:  [47, 58]
+here is the score from that iteration:  [1, 0]
+after 76 rounds, the score is:  [48, 58]
+here is the score from that iteration:  [0, 0]
+after 77 rounds, the score is:  [48, 58]
+no action
+no action
+no action
+no action
+no action
+here is the score from that iteration:  [0, 0]
+after 78 rounds, the score is:  [48, 58]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 79 rounds, the score is:  [49, 59]
+here is the score from that iteration:  [1, 0]
+after 80 rounds, the score is:  [50, 59]
+no action
+no action
+here is the score from that iteration:  [0, 1]
+after 81 rounds, the score is:  [50, 60]
+closest
+here is the score from that iteration:  [1, 1]
+after 82 rounds, the score is:  [51, 61]
+no action
+here is the score from that iteration:  [1, 0]
+after 83 rounds, the score is:  [52, 61]
+closest
+no action
+no action
+here is the score from that iteration:  [1, 1]
+after 84 rounds, the score is:  [53, 62]
+closest
+here is the score from that iteration:  [0, 1]
+after 85 rounds, the score is:  [53, 63]
+closest
+here is the score from that iteration:  [1, 1]
+after 86 rounds, the score is:  [54, 64]
+here is the score from that iteration:  [0, 0]
+after 87 rounds, the score is:  [54, 64]
+no action
+here is the score from that iteration:  [0, 0]
+after 88 rounds, the score is:  [54, 64]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 89 rounds, the score is:  [55, 65]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 90 rounds, the score is:  [56, 66]
+closest
+here is the score from that iteration:  [0, 1]
+after 91 rounds, the score is:  [56, 67]
+no action
+here is the score from that iteration:  [0, 1]
+after 92 rounds, the score is:  [56, 68]
+closest
+no action
+here is the score from that iteration:  [1, 1]
+after 93 rounds, the score is:  [57, 69]
+no action
+here is the score from that iteration:  [1, 1]
+after 94 rounds, the score is:  [58, 70]
+closest
+no action
+here is the score from that iteration:  [1, 0]
+after 95 rounds, the score is:  [59, 70]
+closest
+here is the score from that iteration:  [0, 1]
+after 96 rounds, the score is:  [59, 71]
+closest
+here is the score from that iteration:  [1, 1]
+after 97 rounds, the score is:  [60, 72]
+here is the score from that iteration:  [0, 0]
+after 98 rounds, the score is:  [60, 72]
+here is the score from that iteration:  [0, 1]
+after 99 rounds, the score is:  [60, 73]
+closest
+here is the score from that iteration:  [1, 1]
+after 100 rounds, the score is:  [61, 74]
+
+
+chat link: https://chatgpt.com/share/69a50572-8834-8004-9967-10f6ef59bea8 

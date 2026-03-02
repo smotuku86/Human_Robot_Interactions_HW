@@ -5,12 +5,6 @@ import os
 import time
 from robot import Panda
 
-'''
-2. You can only control one robot. The other robot chooses blocks uniformly at random.
- Develop a strategy to maximize the overall success of the team, and then implement it. 
- You may need to try multiple strategies, and then compare them.
- '''
-
 # robot 1 will try to pick up the block numbered action1
 # robot 2 will try to pick up the block numbered action2
 # returns the score for each robot
@@ -19,8 +13,8 @@ def move_robots(robot1_state, robot2_state, action1, action2, step_count, num_st
     score = [0, 0]
     num_steps = num_steps - 1  #bc the forloop is range(n) - it only counts to n-1
     
-    for idx in range(500):
-        if action1 is -1:
+    for idx in range(400):
+        if action1 == -1:
             panda1.move_to_joint(positionGain=0.01)
         else:
             robot1_position = np.array(robot1_state["ee-position"])
@@ -29,11 +23,14 @@ def move_robots(robot1_state, robot2_state, action1, action2, step_count, num_st
             cube1_positon = np.array(cube1["position"])
             cube1_rotz = cube1["euler"][2]
             position2move2 = robot1_position + step_count/num_steps * ( cube1_positon - robot1_position)
-            rotz2move2 = robot1_rotz + step_count/num_steps * (cube1_rotz - robot1_rotz)
+            #rotz2move2 = robot1_rotz + step_count/num_steps * (cube1_rotz - robot1_rotz)
+            rotz2move2 = cube1_rotz
+            if step_count == 1: #do nothing, observe robot 2 first
+                panda1.move_to_joint(positionGain=0.01)
+            else:
+                panda1.move_to_pose(ee_position= position2move2, ee_rotz=rotz2move2, positionGain=0.01)
 
-            panda1.move_to_pose(ee_position= position2move2, ee_rotz=rotz2move2, positionGain=0.01)
-
-        if action2 is -1:
+        if action2 == -1:
             panda2.move_to_joint(positionGain=0.01)
         else:
             robot2_position = np.array(robot2_state["ee-position"])
@@ -42,7 +39,8 @@ def move_robots(robot1_state, robot2_state, action1, action2, step_count, num_st
             cube2_positon = np.array(cube2["position"])
             cube2_rotz = cube2["euler"][2]
             position2move2 = robot2_position + step_count/num_steps * (cube2_positon - robot2_position)
-            rotz2move2 = robot2_rotz + step_count/num_steps * (cube2_rotz - robot2_rotz)
+            #rotz2move2 = robot2_rotz + step_count/num_steps * (cube2_rotz - robot2_rotz)
+            rotz2move2 = cube2_rotz
 
             panda2.move_to_pose(ee_position= position2move2, ee_rotz=rotz2move2, positionGain=0.01)
         
@@ -61,14 +59,17 @@ def move_robots(robot1_state, robot2_state, action1, action2, step_count, num_st
             panda2.move_to_joint(positionGain=0.01)
             p.stepSimulation()
             time.sleep(control_dt)
+
         # check for success
-        cube1 = get_cube_state(cubes, action1)
+        if action1 != -1:
+            cube1 = get_cube_state(cubes, action1)
+            if cube1["position"][2] > 0.3:
+                score[0] = +1
+
         cube2 = get_cube_state(cubes, action2)
-        
-        if cube1["position"][2] > 0.3:
-            score[0] = +1
         if cube2["position"][2] > 0.3:
             score[1] = +1
+
         # open grippers
         for idx in range(300):
             panda1.open_gripper()
@@ -110,7 +111,7 @@ def get_object_goals(cubes):
     for cube in cubes:
         goals[cube]={}
         cube_state = get_cube_state(cubes, cube)
-        goals[cube]["position"] = cube_state["position"]
+        goals[cube]["position"] = cube_state["position"] + np.array([0, 0, -0.01])
         goals[cube]["rotz"] = cube_state["euler"][2]
     return goals
 
@@ -163,6 +164,7 @@ control_dt = 1. / 240.
 
 # create simulation and place camera
 physicsClient = p.connect(p.GUI) #no gui, run faster do p.DIRECT
+#physicsClient = p.connect(p.DIRECT)
 p.setGravity(0, 0, -9.81)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 p.resetDebugVisualizerCamera(cameraDistance=1.0, 
@@ -203,10 +205,9 @@ panda2 = Panda(basePosition=[+0.7, 0, 0],
 # main loop
 
 '''
-2. You can only control one robot. The other robot chooses blocks uniformly at random.
-Develop a strategy to maximize the overall success of the team, and then implement it. 
-You may need to try multiple strategies, and then compare them.
-Find the closest cube to each robot, and assign that cube to that robot. 
+3. You can only control one robot. The other robot chooses the block closest to its 
+base 50% of the time, and the other 50% of the time it grasps a random block. Develop
+and implement a strategy to coordinate with that robot.
 
 If the cubes are too close to each other, make one robot go first, and command the other
 robot to wait until the first robot is done, or find the next closest cube for the second robot
@@ -215,29 +216,40 @@ robot to wait until the first robot is done, or find the next closest cube for t
 So the pseudocode for this strategy is:
 
 Get the state of environment - cubes and robots
-    robot 2 chooses a random block or the closdets block to it
+    robot 2 chooses a random block
     robot 1 has to figure out what block to get based on robot 2 actions
 as sim steps through
-robot 1 will run a model on robot 2's actions, predict what cube it is going for 
+robot 1 will run a model on robto 2's actions, predict what cube it is going for 
 and robot 1 will go for robot 2's least likely cube
 go get the cubes
+- this is pretty much the same as problem 2 but robot 2 behaves differntly
+
 '''
 
 total_score = [0, 0]
-for iteration in range(10):
+for iteration in range(100):
 
-    print(get_object_goals(cubes))
+    #print(get_object_goals(cubes))
 
     initial_robot1_state = panda1.get_state()
     initial_robot2_state = panda2.get_state()
 
-    print(initial_robot1_state)
+    #print(initial_robot1_state)
     #we control robot 1
-    #robot 2 choose a random cube and goes for it 
+    #robot 2 choose a random cube o rhte closest cube and goes for it 
 
+    #fidn robot2's closest cube
+    c2r2_distances = get_cube_distances(cubes, panda2)
+    r2_sorted_cubes = sorted(c2r2_distances, key=c2r2_distances.get)
+
+    r2_chosen_cube = -1
     # choose which cube each robot should pick up
-    # robot 2 is random
-    r2_chosen_cube = np.random.randint(0, n_cubes)
+    #  random or closest cube?
+    if bool(np.random.randint(2)):
+        r2_chosen_cube = np.random.randint(0, n_cubes)
+    else:
+        r2_chosen_cube = r2_sorted_cubes[0]
+        print('closest')
 
 
     #design a strat that does not collide with robot2 
@@ -251,29 +263,45 @@ for iteration in range(10):
     #
     # move robots will be modified to take steps to goal rather than travel all at once
 
-    steps = 10
+    steps = 5
     iteration_score = [0,0]
     for step in range(steps):
-        print("Step count:", step)
+        
 
+        current_robot1_state = panda1.get_state()
         #try to predict the goal robot 2 is going for
         current_robot2_state = panda2.get_state()
         robot2_predictions = predict_goal(current_robot2_state, initial_robot2_state, goals, beta = 10.0, rot_scale = 0.0)
         robot2_predictions_sorted = sorted(robot2_predictions, key=robot2_predictions.get)
                                     #sorted most liekly to least
         #make robot 1 pick a cube that robot 2 is unlikely to get
-        print("predictions:", robot2_predictions_sorted)
         robot1_chosen_cube = robot2_predictions_sorted[-1]
+        #next, check for proximity, reassign goal if needed
+        likely_cube = get_cube_state(cubes, robot2_predictions_sorted[0])
+        unlikely_cube = get_cube_state(cubes, robot1_chosen_cube)
+        distance = np.linalg.norm(np.array(likely_cube["position"]) - np.array(unlikely_cube["position"]))
+
+        #if the cubes are too close, tell robot 1 to sit this one out to avoid collison
+        if distance < .2:
+            robot1_chosen_cube = -1
+            print("no action")
+
 
         action1 = robot1_chosen_cube
         action2 = r2_chosen_cube
 
-        print("r1:", action1)
-        print("r2:", action2)
+        #print("r1:", action1)
+        #print("r2:", action2)
 
         # robots try to grasp the chosen cubes and lift them
-        iteration_score = move_robots(initial_robot1_state, initial_robot2_state, action1, action2, step, steps)
+        iteration_score = move_robots(current_robot1_state, initial_robot2_state, action1, action2, step, steps)
                                     #if wonky try current states
+        '''
+        print("Step count:", step)
+        print("predictions:", robot2_predictions_sorted)
+        print("r1:", action1)
+        print("r2:", action2)
+        '''
 
     total_score[0] += iteration_score[0]
     total_score[1] += iteration_score[1]
