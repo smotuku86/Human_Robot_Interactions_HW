@@ -6,6 +6,8 @@ import time
 from robot import Panda
 from objects import objects
 
+print("urdf file path:",pybullet_data.getDataPath() )
+
 
 # parameters
 control_dt = 1. / 240.
@@ -19,8 +21,8 @@ p.resetDebugVisualizerCamera(cameraDistance=1.0,
                                 cameraPitch=-40.0, 
                                 cameraTargetPosition=[0.5, 0.0, 0.2])
 
-# load the objects
-urdfRootPath = pybullet_data.getDataPath()
+# # load the objects
+urdfRootPath = pybullet_data.getDataPath() 
 plane = p.loadURDF(os.path.join(urdfRootPath, "plane.urdf"), basePosition=[0, 0, -0.625])
 table = p.loadURDF(os.path.join(urdfRootPath, "table/table.urdf"), basePosition=[0.5, 0, -0.625])
 cube1 = objects.SimpleObject("cube.urdf", basePosition=[0.5, -0.3, 0.025], baseOrientation=p.getQuaternionFromEuler([0, 0, 0.7]))
