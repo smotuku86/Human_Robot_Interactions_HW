@@ -44,8 +44,12 @@ while True:
     # try printing these states to see what they contain
     robot_state = panda.get_state()
     cube1_state = cube1.get_state()
+    cube2_state = cube2.get_state()
+    cube3_state = cube3.get_state()
     cabinet_state = cabinet.get_state()
+    microwave_state = microwave.get_state()
 
+    
     # step the simulation
     p.stepSimulation()
     time.sleep(control_dt)

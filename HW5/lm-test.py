@@ -1,5 +1,5 @@
 from openai import OpenAI
-from HW5.secret_key import sk
+from secret_key import sk
 
 
 # Modify OpenAI's API key and API base to use the server.
