@@ -209,20 +209,17 @@ panda2 = Panda(basePosition=[+0.7, 0, 0],
 base 50% of the time, and the other 50% of the time it grasps a random block. Develop
 and implement a strategy to coordinate with that robot.
 
-If the cubes are too close to each other, make one robot go first, and command the other
-robot to wait until the first robot is done, or find the next closest cube for the second robot
-(runs the same promixity check)
-
 So the pseudocode for this strategy is:
 
 Get the state of environment - cubes and robots
-    robot 2 chooses a random block
+    robot 2 chooses a random block or the closet one to it ( 50-50 )
     robot 1 has to figure out what block to get based on robot 2 actions
-as sim steps through
-robot 1 will run a model on robto 2's actions, predict what cube it is going for 
-and robot 1 will go for robot 2's least likely cube
+        Robot move in 5 steps
+        In this proccess, robot 1 will first observe robot 2's first move, and then predict/act towards a goal
+            robot 1 will run a model on robot 2's actions, predict what cube it is going for 
+            and robot 1 will go for robot 2's least likely cube
+            If the cubes are too close together - it will sit the round out
 go get the cubes
-- this is pretty much the same as problem 2 but robot 2 behaves differntly
 
 '''
 

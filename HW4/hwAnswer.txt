@@ -1,5 +1,26 @@
 Data is shown at the end - best result after 2 runs
 
+The final strategy (Strategy 2) that used is as follows 
+'''
+3. You can only control one robot. The other robot chooses the block closest to its 
+base 50% of the time, and the other 50% of the time it grasps a random block. Develop
+and implement a strategy to coordinate with that robot.
+
+So the pseudocode for this strategy is:
+
+Get the state of environment - cubes and robots
+    robot 2 chooses a random block or the closet one to it ( 50-50 )
+    robot 1 has to figure out what block to get based on robot 2 actions
+        Robots move in 5 steps per iteration
+        In this proccess, robot 1 will first observe robot 2's first move, and then predict/act towards a goal
+            robot 1 will run a model on robot 2's actions, predict what cube it is going for 
+            and robot 1 will go for robot 2's least likely cube
+            If the cubes are too close together - it will sit the round out
+once cube selection is decided they go toward the subes and procceed to the next step until 5 steps happen and then
+they do the pick up sequence and reset
+
+'''
+
 Strategy 1 was for Robot 1 to always go for whatever it thought Robot 2 was least likely to go for. Cube selection was based on running a 
 distance-based probability calculation and choosing the cube with the smallest probability. Robot 1 scored 40/100 and Robot 2 scored 65/100. 
 This shows that always playing aggressively does not necessarily result in the highest score. I observed several collisions, and almost all 
@@ -16,8 +37,14 @@ By observing during the first step, Robot 1 can also better predict Robot 2’s 
 although some edge cases still remained (aside from occasional failures to pick up a cube). The two main edge cases observed 
 were situations where Robot 1 would change its goal at the last second or be unable to reach far enough to grasp a cube.
 
-These two strategies show us that employing safety into a control policy that orginally had no safety can improve scores. 
+Comparing these two strategies shows that incorporating safety into a control policy that originally had no safety considerations can improve overall scores.
+The robot stays out when its chances of colliding with the other robot are high, such as when all the cubes are clustered together. When attempting to score, 
+it instead targets cubes that are farther away. Since there is no bonus for choosing closer cubes, this method of cube selection is effective for successfully 
+retrieving a cube while minimizing the risk of collision.
 
+Generally, performance and safety do not always go hand in hand, and one often has to sacrifice one for the other. In this case, however, pure performance-driven 
+behavior resulted in a lower score, while adding safety measures led to a higher score. This can be attributed to the pure performance strategy causing collisions, 
+which cost the robots the score for that round. Incorporating a safety policy (such as a proximity check) avoided those collisions, thereby increasing the overall score.
 
 Run 1:
 TLDR - after 100 rounds, the score is:  [40, 65]

@@ -2,3 +2,5 @@ openai
 numpy
 pandas
 pybullet
+requests
+json
