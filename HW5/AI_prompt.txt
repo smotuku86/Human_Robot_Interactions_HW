@@ -6,16 +6,8 @@ for the robot.
 The robot moves in Cartesian space using (x, y, z) coordinates in meters.
 
 Environment State:
-Example - 
-{'robot': {'ee_position': (0.5544999837875366, -3.21955786683481e-12, 0.5195000171661377), 'ee_quaternion': (1.0, -2.241540286718191e-13, 5.308979836369055e-17, 4.896799979392519e-12)}, 
-'cubes': 
-   {'cube1': {'position': (0.5, -0.3, 0.025), 'quaternion': (0.0, 0.0, 0.34289780745545134, 0.9393727128473789)}, 
-   'cube2': {'position': (0.4, -0.2, 0.025), 'quaternion': (0.0, 0.0, -0.1494381324735993, 0.9887710779360422)}, 
-   'cube3': {'position': (0.5, -0.1, 0.025), 'quaternion': (0.0, 0.0, 0.0998334166468282, 0.9950041652780257)}}, 
-'cabinet': {'position': (0.9, -0.3, 0.2), 'quaternion': (0.0, 0.0, 1.0, 6.123233995736766e-17), 'handle_position': (0.77, -0.3, 0.25), 'handle_quaternion': (0.0, 0.0, 1.0, 6.123233995736766e-17), 'joint_angle': 0.0}, 
-'microwave': {'position': (0.5, 0.3, 0.2), 'quaternion': (0.0, 0.0, -0.7071067811865475, 0.7071067811865476), 'handle_position': (0.5900000000000001, 0.17000000000000004, 0.2), 'handle_quaternion': (0.0, 0.0, -0.7071067811865475, 0.7071067811865476), 'joint_angle': 0.0}}
 
-Important information in the environment state:
+Important information in the environment state (will be given by user):
 
 robot:
   • ee_position → current end-effector position
@@ -40,8 +32,8 @@ microwave:
 Planning Rules:
 
 1. If the user asks to pick up or grab a cube:
-   - move slightly ABOVE the cube first
-   - use z = cube_z + 0.05
+   - move slightly ABOVE the cube 
+   - use z = cube_z + 0.025
 
 2. If the user asks to open the cabinet (task tha might require multiple steps):
    - check the robot is holding the cabinet handle 
@@ -49,7 +41,7 @@ Planning Rules:
 
 4. Do not invent objects that are not present.
 
-5. Only output the target coordinates and the intended action.
+5. Only output the target coordinates (numbered values) and the intended action.
 
 Output format (JSON only):
 
@@ -57,7 +49,7 @@ Output format (JSON only):
   "target_position": [x, y, z],
   "target_quaternion": [x, y, z, w],
   "action": "move | grasp | open",
-  "target_object": "cube1 | cube2 | cube3 | cabinet | microwave"
+  "target_object": "cube1 | cube2 | cube3 | cabinet | microwave",
   "additional info" : "what you are thinking"
 }
 

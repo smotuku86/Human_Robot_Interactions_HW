@@ -78,12 +78,12 @@ def clean_json_block(text: str) -> str:
 def action_to_goal(robot_position, robot_quat, goal_position, goal_quat):
     position_error = np.array(goal_position) - np.array(robot_position)
     robot_euler = np.array(p.getEulerFromQuaternion(robot_quat))
-    goal_euler = np.array(p.getEulerFromQuaternion(goal_quat))
+    goal_euler = np.array(p.getEulerFromQuaternion(goal_quat)) 
     rot_error = goal_euler - robot_euler
     if np.linalg.norm(position_error) > 0.01:
         position_error = position_error / np.linalg.norm(position_error)
     if np.linalg.norm(rot_error) > 0.01:
-        rot_error = rot_error / np.abs(rot_error)
+        rot_error = rot_error / np.linalg.norm(rot_error)
     # the gains 0.001 and 0.005 match the default pos_step and rot_step in teleop
     target_position = robot_position + 0.001 * position_error
     target_euler = np.array(robot_euler + 0.005 * rot_error)
@@ -122,9 +122,9 @@ p.resetDebugVisualizerCamera(cameraDistance=1.0,
 urdfRootPath = pybullet_data.getDataPath() 
 plane = p.loadURDF(os.path.join(urdfRootPath, "plane.urdf"), basePosition=[0, 0, -0.625])
 table = p.loadURDF(os.path.join(urdfRootPath, "table/table.urdf"), basePosition=[0.5, 0, -0.625])
-cube1 = objects.SimpleObject("cube.urdf", basePosition=[0.5, -0.3, 0.025], baseOrientation=p.getQuaternionFromEuler([0, 0, 0.7]))
-cube2 = objects.SimpleObject("cube.urdf", basePosition=[0.4, -0.2, 0.025], baseOrientation=p.getQuaternionFromEuler([0, 0, -0.3]))
-cube3 = objects.SimpleObject("cube.urdf", basePosition=[0.5, -0.1, 0.025], baseOrientation=p.getQuaternionFromEuler([0, 0, 0.2]))
+cube1 = objects.SimpleObject("cube.urdf", basePosition=[0.5, -0.3, 0.025], baseOrientation=p.getQuaternionFromEuler([np.pi, 0, 0.7]))
+cube2 = objects.SimpleObject("cube.urdf", basePosition=[0.4, -0.2, 0.025], baseOrientation=p.getQuaternionFromEuler([np.pi, 0, -0.3]))
+cube3 = objects.SimpleObject("cube.urdf", basePosition=[0.5, -0.1, 0.025], baseOrientation=p.getQuaternionFromEuler([np.pi, 0, 0.2]))
 cabinet = objects.CollabObject("cabinet.urdf", basePosition=[0.9, -0.3, 0.2], baseOrientation=p.getQuaternionFromEuler([0, 0, np.pi]))
 microwave = objects.CollabObject("microwave.urdf", basePosition=[0.5, 0.3, 0.2], baseOrientation=p.getQuaternionFromEuler([0, 0, -np.pi/2]))
 
@@ -147,6 +147,9 @@ z_buffer = .02
 #init variables for robot action
 #so it starts as it reached the goal  - and so it asks for a prompt
 robot_action = [target_position, target_quaternion]
+#plan = {"target_position" : target_position, 
+#        "target_quaternion": [0,1,0,0] }
+goal_reached = True
 
 #so the script doesnt spam us with input requests
 waiting_for_input = False
@@ -169,6 +172,7 @@ while True:
     human_quaternion = p.multiplyTransforms([0, 0, 0], p.getQuaternionFromEuler(action[3:6]),
                                                 [0, 0, 0], target_quaternion)[1]
     human_quaternion = np.array(human_quaternion)
+    human_euler = p.getEulerFromQuaternion(human_quaternion)
 
     # example how how you can get information about objects
     # try printing these states to see what they contain
@@ -187,12 +191,14 @@ while True:
     response = requests.get("http://localhost:8000/next_task")
     task = response.json().get("task")  # task could be None
     
+
     if (task != None) and (np.linalg.norm(np.array(robot_state['ee-position']) - np.array(robot_action[0])) < .01):
         # prompt a new action
-        task = response.json().get("task")
-        #print(f"Task: {task}")
+        goal_reached = False
 
-        prompt = f'{file_content} {task}'
+        prompt = f'''{file_content} 
+                Environment Stae: {get_env_state()}
+                {task}'''
         response = client.chat.completions.create(
             model="qwen2.5-coder:7b",
             messages=[
@@ -202,7 +208,6 @@ while True:
         )
 
         LLM_response = response.choices[0].message.content
-        print(LLM_response)
         # parse the response to get the robot action
         # convert JSON string → Python dict
         LLM_response = clean_json_block(LLM_response)
@@ -219,26 +224,30 @@ while True:
         print("Action:", robot_intended_action)
         print("Target object:", target_object)
     else:
-        #keep current robot action
-        robot_action = robot_action
-        #doesn't really do anything tbh
+        #keep current robot actions goign unless it has reached the goal
+        if np.linalg.norm(np.array(robot_state['ee-position']) - np.array(plan["target_position"])) > .01:
+            robot_action = action_to_goal(robot_state["ee-position"], robot_state['ee-quaternion'],plan["target_position"], plan["target_quaternion"])
+        else:
+            goal_reached = True
+        
     
-    alpha = 0.5 #don't move less user is too
+    alpha = 0 #don't move less user is too
     if DidUserAct:
         alpha = 0.2
+    elif goal_reached:
+        alpha = 0
+
 
     # blending human robot control
     target_position = (1-alpha) * human_position + alpha * np.array(robot_action[0])
-    target_quaternion = (1-alpha) * human_quaternion + alpha * np.array(robot_action[1])
+    robot_euler = p.getEulerFromQuaternion(robot_action[1])
+    blended_euler = (1-alpha) * np.array(human_euler) + alpha * np.array(robot_euler)
+    target_quaternion = p.getQuaternionFromEuler(blended_euler)
 
     #Check for table interference
     if target_position[2] + action[2] < z_buffer:
         action[2] = 0
     
-    target_position = target_position + action[0:3] 
-
-    target_quaternion = p.multiplyTransforms([0, 0, 0], p.getQuaternionFromEuler(action[3:6]),
-                                                [0, 0, 0], target_quaternion)[1]
     # move to the target pose
     panda.move_to_pose(ee_position=target_position, ee_quaternion=target_quaternion)
 
