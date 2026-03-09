@@ -72,13 +72,140 @@ def get_env_state():
 }
     return env_state
 
+import numpy as np
+
+#helper to scoring function to check if cube is in box
+def is_inside(cube_pos, obj_name, obj_pos, obj_yaw=0.0):
+    """
+    Check if a cube (point) is inside a cabinet or microwave.
+    
+    cube_pos  : (x, y, z) world position of the cube
+    obj_name  : "cabinet" or "microwave"
+    obj_pos   : (x, y, z) world position of the object origin
+    obj_yaw   : rotation around Z axis in radians (default 0)
+    """
+
+    bounds = {
+        "microwave": {
+            "x": (-0.10, +0.10),
+            "y": (-0.15, +0.15),
+            "z": (-0.10, +0.10),
+        },
+        "cabinet": {
+            "x": (-0.10, +0.10),
+            "y": (-0.15, +0.15),
+            "z": (-0.10, +0.10),
+        },
+    }
+
+    if obj_name not in bounds:
+        raise ValueError(f"Unknown object: {obj_name}. Use 'cabinet' or 'microwave'.")
+
+    # Translate cube into object's local frame
+    delta = np.array(cube_pos) - np.array(obj_pos)
+
+    # Yaw rotation matrix (around Z, undoing object's yaw)
+    rot = np.array([
+        [ np.cos(-obj_yaw), -np.sin(-obj_yaw), 0],
+        [ np.sin(-obj_yaw),  np.cos(-obj_yaw), 0],
+        [0,                  0,                 1],
+    ])
+
+    #this is a vector of the displacement between 
+    #the cube and orgin of a box, accounting for the box's rotation
+    local = rot @ delta
+
+    b = bounds[obj_name]
+    is_it_inside = ( ( b["x"][0] <= local[0] <= b["x"][1] ) and
+                     ( b["y"][0] <= local[1] <= b["y"][1] ) and
+                     ( b["z"][0] <= local[2] <= b["z"][1] ) )
+    return is_it_inside
+
+scoring_state = {
+    "cabinet": {"is_open": False, "open_count": 0, "close_count": 0, "scored": False},
+    "microwave": {"is_open": False, "open_count": 0, "close_count": 0}, "scored": False,
+    "cube1": {"in_box": False},
+    "cube2": {"in_box": False},
+    "cube3": {"in_box": False},
+}
+
+def scoring_state_machine(score, scoring_state):
+    #funtion run at end of loop to tell us the current score 
+    '''
+    microwave size from origin:
+    X: +0.10 to +0.10
+    Y: -0.15 to +0.15 
+    Z: -0.10 to +0.10
+    Cabinet is same size
+    '''
+    #Get states of everything we need
+    env_state = get_env_state()
+
+    cube1_pos = env_state['cubes']['cube1']["position"]
+    cube2_pos = env_state['cubes']['cube2']["position"]
+    cube3_pos = env_state['cubes']['cube3']["position"]
+
+    microwave_origin = env_state['microwave']['position']
+    microwave_zrot = p.getEulerFromQuaternion(env_state['microwave']['quaternion'])[2]
+    microwave_handle_origin = env_state['microwave']['handle_position']
+    microwave_hinge_angle = env_state['microwave']['joint_angle']
+    cabinet_origin = env_state['cabinet']['position']
+    cabinet_zrot = p.getEulerFromQuaternion(env_state['cabinet']['quaternion'])[2]
+    cabinet_handle_origin = env_state['cabinet']['handle_position']
+    cabinet_drawer_displacement = env_state['cabinet']['joint_angle']
+
+    #hardcoded number of cubes
+    cube_positions = [cube1_pos, cube2_pos, cube3_pos]
+
+    for i, cube_pos in enumerate(cube_positions):
+        obj_name = f"cube{i+1}"
+        #if the box is not in any boxes - check for it
+        if not scoring_state[obj_name]["in_box"]:
+            in_cabinet = is_inside(cube_pos, "cabinet", cabinet_origin, cabinet_zrot) 
+            in_microwave = is_inside(cube_pos, "microwave", microwave_origin, microwave_zrot)
+            scoring_state[obj_name]["in_box"] = in_cabinet | in_microwave
+
+            #if cube got put in box, add 1 point
+            if scoring_state[obj_name]["in_box"]:
+                score +=1
+
+    #check for if the micro wave got opened and closed 
+    # +1 point if so (only on first time)
+    if (microwave_hinge_angle > 45 and not scoring_state["microwave"]["is_open"]):
+        scoring_state["microwave"]["is_open"] = True
+        scoring_state["microwave"]["open_count"] += 1
+    elif (scoring_state["microwave"]["is_open"] and microwave_hinge_angle < 3):
+        scoring_state["microwave"]["is_open"] = False
+        scoring_state["microwave"]["close_count"] += 1
+
+    if (scoring_state["microwave"]["open_count"] == 1 and
+        scoring_state["microwave"]["close_count"] == 1 and
+        not scoring_state["microwave"]["scored"]):
+        score += 1
+
+    #check for if the cabinet got opened and closed 
+    # +1 point if so (only on first time)
+    if (cabinet_drawer_displacement > .1 and not scoring_state["cabinet"]["is_open"]):
+        scoring_state["cabinet"]["is_open"] = True
+        scoring_state["cabinet"]["open_count"] += 1
+    elif (scoring_state["cabinet"]["is_open"] and cabinet_drawer_displacement < .02):
+        scoring_state["cabinet"]["is_open"] = False
+        scoring_state["cabinet"]["close_count"] += 1
+
+    if (scoring_state["cabinet"]["open_count"] == 1 and
+        scoring_state["cabinet"]["close_count"] == 1 and
+        not scoring_state["cabinet"]["scored"]):
+        score += 1
+
+    return score, scoring_state
+
 #chat lowkey cooked this one up
 def clean_json_block(text: str) -> str:
     """
     Removes ```json or ``` and trailing ``` from a string containing JSON.
     Returns the clean JSON string.
     """
-    # Remove ```json at the start or ``` at the start
+    # Remove ```json at the start 
     text = re.sub(r"^```(?:json)?\s*", "", text)
     # Remove ``` at the end
     text = re.sub(r"\s*```$", "", text)
@@ -199,7 +326,6 @@ AssistanceOn = True
 #vaibles to keep track of score 
 score = 0
 
-
 # main loop
 while True:
 
@@ -316,6 +442,9 @@ while True:
     if action[7] == +1:
         print(robot_state["joint-position"])
     
+    #update score
+    score, scoring_state = scoring_state_machine(score, scoring_state)
+
     # step the simulation
     p.stepSimulation()
     time.sleep(control_dt)
