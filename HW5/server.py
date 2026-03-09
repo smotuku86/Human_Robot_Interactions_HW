@@ -9,6 +9,8 @@ import json
 # --------- Queues ---------
 task_queue = queue.Queue()
 llm_messages = queue.Queue()
+score_messages = queue.Queue()
+time_messages = queue.Queue()
 
 # --------- FastAPI setup ---------
 app = FastAPI()
@@ -32,6 +34,17 @@ def home():
 
         <input type="text" id="taskInput" placeholder="Enter a task" style="width:300px;">
         <button onclick="sendTask()">Send</button>
+
+        <div style="display:flex; gap:16px; margin: 12px 0;">
+            <div style="flex:1; background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:12px;">
+                <div style="font-size:11px; font-weight:600; color:#495057; text-transform:uppercase; letter-spacing:0.05em;">Score</div>
+                <div id="score" style="font-size:28px; font-weight:700; color:#212529; font-family:'Segoe UI',sans-serif;">—</div>
+            </div>
+            <div style="flex:1; background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:12px;">
+                <div style="font-size:11px; font-weight:600; color:#495057; text-transform:uppercase; letter-spacing:0.05em;">Time Elapsed</div>
+                <div id="time" style="font-size:28px; font-weight:700; color:#212529; font-family:'Segoe UI',sans-serif;">—</div>
+            </div>
+        </div>
 
         <h3>LLM Status</h3>
         <div id="status" style="
@@ -127,6 +140,18 @@ def home():
             }
         };
 
+        const scoreSource = new EventSource("/stream_score");
+        scoreSource.onmessage = function(event) {
+            if (event.data === "ping") return;
+            document.getElementById("score").textContent = event.data;
+        };
+
+        const timeSource = new EventSource("/stream_time");
+        timeSource.onmessage = function(event) {
+            if (event.data === "ping") return;
+            document.getElementById("time").textContent = event.data + "s";
+        };
+
         source.onerror = function(e) {
             console.warn("SSE connection error, reconnecting...", e);
         };
@@ -167,6 +192,48 @@ def receive_llm_response(data: dict):
     llm_messages.put(message)
 
     return {"status": "received"}
+
+
+# --------- Receive score ---------
+@app.post("/update_score")
+def update_score(data: dict):
+    score_messages.put(str(data["score"]))
+    return {"status": "received"}
+
+
+# --------- Receive time ---------
+@app.post("/update_time")
+def update_time(data: dict):
+    time_messages.put(str(data["time"]))
+    return {"status": "received"}
+
+
+# --------- Stream score to browser ---------
+@app.get("/stream_score")
+def stream_score():
+    def event_stream():
+        while True:
+            try:
+                message = score_messages.get(timeout=15)
+                yield f"data: {message}\n\n"
+            except queue.Empty:
+                yield "data: ping\n\n"
+    return StreamingResponse(event_stream(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+# --------- Stream time to browser ---------
+@app.get("/stream_time")
+def stream_time():
+    def event_stream():
+        while True:
+            try:
+                message = time_messages.get(timeout=15)
+                yield f"data: {message}\n\n"
+            except queue.Empty:
+                yield "data: ping\n\n"
+    return StreamingResponse(event_stream(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 # --------- Stream messages to browser ---------

@@ -33,7 +33,7 @@ Planning Rules:
 
 1. If the user asks to pick up or grab a cube:
    - move slightly ABOVE the cube 
-   - use z = cube_z + 0.025
+   - use z = cube_z + 0.01
 
 2. If the user asks to open the cabinet (task tha might require multiple steps):
    - check the robot is near the cabinet handle 

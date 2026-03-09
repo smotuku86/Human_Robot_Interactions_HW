@@ -159,11 +159,11 @@ def scoring_state_machine(score, scoring_state):
 
     for i, cube_pos in enumerate(cube_positions):
         obj_name = f"cube{i+1}"
-        #if the box is not in any boxes - check for it
+        #if the cube is not in any boxes - check for it
         if not scoring_state[obj_name]["in_box"]:
             in_cabinet = is_inside(cube_pos, "cabinet", cabinet_origin, cabinet_zrot) 
             in_microwave = is_inside(cube_pos, "microwave", microwave_origin, microwave_zrot)
-            scoring_state[obj_name]["in_box"] = in_cabinet | in_microwave
+            scoring_state[obj_name]["in_box"] = in_cabinet or in_microwave
 
             #if cube got put in box, add 1 point
             if scoring_state[obj_name]["in_box"]:
@@ -181,6 +181,8 @@ def scoring_state_machine(score, scoring_state):
     if (scoring_state["microwave"]["open_count"] == 1 and
         scoring_state["microwave"]["close_count"] == 1 and
         not scoring_state["microwave"]["scored"]):
+
+        scoring_state["microwave"]["scored"] = True
         score += 1
 
     #check for if the cabinet got opened and closed 
@@ -195,6 +197,8 @@ def scoring_state_machine(score, scoring_state):
     if (scoring_state["cabinet"]["open_count"] == 1 and
         scoring_state["cabinet"]["close_count"] == 1 and
         not scoring_state["cabinet"]["scored"]):
+
+        scoring_state["cabinet"]["scored"] = True
         score += 1
 
     return score, scoring_state
@@ -407,7 +411,7 @@ while True:
     alpha = 0 #default no assist
 
     if AssistanceOn:
-        alpha = .5
+        alpha = .8
 
         if DidUserAct: 
             #if the user is commadning during assistance, turn assist down
@@ -445,6 +449,11 @@ while True:
     #update score
     score, scoring_state = scoring_state_machine(score, scoring_state)
 
+    timer = current_time - start_time
+
+    requests.post("http://localhost:8000/update_score", json={"score": score})
+    requests.post("http://localhost:8000/update_time", json={"time": round(timer, 2)})
+    
     # step the simulation
     p.stepSimulation()
     time.sleep(control_dt)
