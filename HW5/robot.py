@@ -43,14 +43,15 @@ class Panda():
     # can tune the controller with "positionGains" as inputs to setJointMotorControlArray
     def close_gripper(self):
         positionGains = [0.01] * 2
-        p.setJointMotorControlArray(self.panda, [9,10], p.POSITION_CONTROL, targetPositions=[0.0, 0.0], positionGains=positionGains)
+        p.setJointMotorControlArray(self.panda, [9,10], p.POSITION_CONTROL, targetPositions=[0.0, 0.0], positionGains=positionGains, forces = [100,100])
+        
 
     # open the robot's gripper
     # moves the fingers to positions [0.04, 0.04]
     # can tune the controller with "positionGains" as inputs to setJointMotorControlArray
     def open_gripper(self):
         positionGains = [0.01] * 2
-        p.setJointMotorControlArray(self.panda, [9,10], p.POSITION_CONTROL, targetPositions=[0.04, 0.04], positionGains=positionGains)
+        p.setJointMotorControlArray(self.panda, [9,10], p.POSITION_CONTROL, targetPositions=[0.06, 0.06], positionGains=positionGains)
 
     # inverse kinematics (IK) of the panda robot
     # computes the joint angles that makes the end-effector reach a given target position in Cartesian world space

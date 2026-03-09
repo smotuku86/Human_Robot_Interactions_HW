@@ -6,6 +6,7 @@ import time
 from robot import Panda
 from objects import objects
 from openai import OpenAI
+from secret_key import sk
 from teleop import KeyboardController
 import json
 import re
@@ -22,6 +23,16 @@ def get_env_state():
     cube3_state = cube3.get_state()
     cabinet_state = cabinet.get_state()
     microwave_state = microwave.get_state()
+
+    #mod the handle states a little to let the robot grab it 
+    microwavehandle_euler = np.array(p.getEulerFromQuaternion(microwave_state["handle_quaternion"]))
+    microwavehandle_euler_rotz = np.array([0,0,np.pi])
+    microwave_state["handle_quaternion"] = np.array(p.getQuaternionFromEuler(microwavehandle_euler + microwavehandle_euler_rotz))
+
+    cabinet_handle_euler = np.array(p.getEulerFromQuaternion(cabinet_state["handle_quaternion"]))
+    cabinet_handle_euler_rotz = np.array([0,0,np.pi])
+    cabinet_state["handle_quaternion"] = np.array(p.getQuaternionFromEuler(cabinet_handle_euler + cabinet_handle_euler_rotz))
+
     env_state = {
         "robot": {
             "ee_position": robot_state["ee-position"],
@@ -79,16 +90,29 @@ def action_to_goal(robot_position, robot_quat, goal_position, goal_quat):
     position_error = np.array(goal_position) - np.array(robot_position)
     robot_euler = np.array(p.getEulerFromQuaternion(robot_quat))
     goal_euler = np.array(p.getEulerFromQuaternion(goal_quat)) 
-    rot_error = goal_euler - robot_euler
+    rotx_error = goal_euler[0] - robot_euler[0]
+    roty_error = goal_euler[1] - robot_euler[1]
+    rotz_error = goal_euler[2] - robot_euler[2]
     if np.linalg.norm(position_error) > 0.01:
         position_error = position_error / np.linalg.norm(position_error)
-    if np.linalg.norm(rot_error) > 0.01:
-        rot_error = rot_error / np.linalg.norm(rot_error)
+    if np.abs(rotx_error) > 0.01:
+        rotx_error = rotx_error / np.abs(rotx_error)
+    if np.abs(roty_error) > 0.01:
+        roty_error = roty_error / np.abs(roty_error)
+    if np.abs(rotz_error) > 0.01:
+        rotz_error = rotz_error / np.abs(rotz_error)
+    
     # the gains 0.001 and 0.005 match the default pos_step and rot_step in teleop
     target_position = robot_position + 0.001 * position_error
-    target_euler = np.array(robot_euler + 0.005 * rot_error)
+    rot_scale = .005
+    target_rotx = robot_euler[0] + rot_scale * rotx_error
+    target_roty = robot_euler[1] + rot_scale * roty_error
+    target_rotz = robot_euler[2] + rot_scale * rotz_error
+
+    target_euler = np.array([robot_euler[0],robot_euler[1], target_rotz])
     return target_position, np.array(p.getQuaternionFromEuler(target_euler))
 
+''' Not using rn
 #setup connection to local langauge model
 # Ollama runs locally and exposes an OpenAI-compatible API
 client = OpenAI(
@@ -96,6 +120,17 @@ client = OpenAI(
     base_url="http://127.0.0.1:11434/v1"
 )
 model = "qwen2.5-coder:7b"
+'''
+
+# Modify OpenAI's API key and API base to use the server.
+openai_api_key = sk
+openai_api_base = "https://llm-api.arc.vt.edu/api/v1"
+
+client = OpenAI(
+    api_key=openai_api_key,
+    base_url=openai_api_base,
+)
+model = "gpt-oss-120b"
 
 #read in Ai Prompt to give to LLM
 # Read a local file
@@ -129,7 +164,8 @@ cabinet = objects.CollabObject("cabinet.urdf", basePosition=[0.9, -0.3, 0.2], ba
 microwave = objects.CollabObject("microwave.urdf", basePosition=[0.5, 0.3, 0.2], baseOrientation=p.getQuaternionFromEuler([0, 0, -np.pi/2]))
 
 # load the robot
-jointStartPositions = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.04, 0.04]
+#jointStartPositions = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.04, 0.04]
+jointStartPositions = [-0.3015089621607984, -0.97795221389853, 0.22442506269298454, -2.7081846651776735, 2.4854378663851446, 2.7808122637773205, 1.6185771651945327, 0.0, 0.0, 0.06, 0.06]
 panda = Panda(basePosition=[0, 0, 0],
                 baseOrientation=p.getQuaternionFromEuler([0, 0, 0]),
                 jointStartPositions=jointStartPositions)
@@ -147,14 +183,22 @@ z_buffer = .02
 #init variables for robot action
 #so it starts as it reached the goal  - and so it asks for a prompt
 robot_action = [target_position, target_quaternion]
-#plan = {"target_position" : target_position, 
-#        "target_quaternion": [0,1,0,0] }
+plan = {"target_position" : target_position, 
+        "target_quaternion": target_quaternion }
 goal_reached = True
 
 #so the script doesnt spam us with input requests
 waiting_for_input = False
 
 #print(get_env_state())
+
+#flip this true/false for autonomy to assist
+AssistanceOn = True
+
+
+#vaibles to keep track of score 
+score = 0
+
 
 # main loop
 while True:
@@ -197,10 +241,10 @@ while True:
         goal_reached = False
 
         prompt = f'''{file_content} 
-                Environment Stae: {get_env_state()}
+                Environment State: {get_env_state()}
                 {task}'''
         response = client.chat.completions.create(
-            model="qwen2.5-coder:7b",
+            model=model,
             messages=[
                 {"role": "system", "content": "You are a helpful robotics assistant."},
                 {"role": "user", "content": prompt}
@@ -210,10 +254,10 @@ while True:
         LLM_response = response.choices[0].message.content
         # parse the response to get the robot action
         # convert JSON string → Python dict
-        LLM_response = clean_json_block(LLM_response)
-        print(LLM_response)
         plan = json.loads(LLM_response)
-
+        LLM_response = clean_json_block(LLM_response)
+        requests.post("http://localhost:8000/llm_response",
+            json=plan)
         # get target position and quaternion
         robot_action = action_to_goal(robot_state["ee-position"], robot_state['ee-quaternion'],plan["target_position"], plan["target_quaternion"])
         robot_intended_action = plan["action"]
@@ -229,15 +273,24 @@ while True:
             robot_action = action_to_goal(robot_state["ee-position"], robot_state['ee-quaternion'],plan["target_position"], plan["target_quaternion"])
         else:
             goal_reached = True
+            goal_reached_message = {"Action": "Nothing"}
+            requests.post("http://localhost:8000/llm_response",
+            json=goal_reached_message)
         
     
-    alpha = 0 #don't move less user is too
-    if DidUserAct:
-        alpha = 0.2
-    elif goal_reached:
-        alpha = 0
+    alpha = 0 #default no assist
 
+    if AssistanceOn:
+        alpha = .5
 
+        if DidUserAct: 
+            #if the user is commadning during assistance, turn assist down
+            alpha = 0.1
+        if goal_reached:
+            #if the goal was reached, turn assistance off
+            #robot is will continue helping after a new prompt is given
+            alpha = 0
+    
     # blending human robot control
     target_position = (1-alpha) * human_position + alpha * np.array(robot_action[0])
     robot_euler = p.getEulerFromQuaternion(robot_action[1])
@@ -259,6 +312,9 @@ while True:
         panda.close_gripper()
         gripper_open = False
 
+    # print state
+    if action[7] == +1:
+        print(robot_state["joint-position"])
     
     # step the simulation
     p.stepSimulation()

@@ -36,8 +36,15 @@ Planning Rules:
    - use z = cube_z + 0.025
 
 2. If the user asks to open the cabinet (task tha might require multiple steps):
-   - check the robot is holding the cabinet handle 
-      - if it is not tell the user and update action to grasp cabinet handle
+   - check the robot is near the cabinet handle 
+   - then you can output a displacement to open the cabinet
+   - no need to move above it, just get to it
+   - the cabinet opens in the negative x direction and closes in the positive x direction by like .2
+
+3. Opening the microwave requires swinging the door open, 
+  the handle is on one side and the hinge on the other end. 
+  Figure the coordinates + rotation out and send that. 
+  -door opens clockwise, and door closes counter-clockwise 
 
 4. Do not invent objects that are not present.
 
@@ -48,7 +55,7 @@ Output format (JSON only):
 {
   "target_position": [x, y, z],
   "target_quaternion": [x, y, z, w],
-  "action": "move | grasp | open",
+  "action": "move | grasp | open | close",
   "target_object": "cube1 | cube2 | cube3 | cabinet | microwave",
   "additional info" : "what you are thinking"
 }

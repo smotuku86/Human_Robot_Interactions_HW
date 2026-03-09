@@ -2,18 +2,21 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import queue
 import threading
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 import time
+import json
 
-# --------- Task queue ---------
+# --------- Queues ---------
 task_queue = queue.Queue()
+llm_messages = queue.Queue()
 
 # --------- FastAPI setup ---------
 app = FastAPI()
 
-# --------- Task handler thread ---------
+# --------- Request Models ---------
 class TaskRequest(BaseModel):
     task: str
+
 
 # --------- HTML page ---------
 @app.get("/", response_class=HTMLResponse)
@@ -26,52 +29,179 @@ def home():
     </head>
     <body>
         <h2>Robot Teleop Console</h2>
+
         <input type="text" id="taskInput" placeholder="Enter a task" style="width:300px;">
         <button onclick="sendTask()">Send</button>
-        <p id="status"></p>
+
+        <h3>LLM Status</h3>
+        <div id="status" style="
+            font-family: 'Segoe UI', sans-serif;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px;
+            color: #888;
+            font-style: italic;
+        ">Waiting...</div>
+
+        <style>
+            .llm-table {
+                border-collapse: collapse;
+                width: 100%;
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 14px;
+            }
+            .llm-table tr {
+                border-bottom: 1px solid #e9ecef;
+            }
+            .llm-table tr:last-child {
+                border-bottom: none;
+            }
+            .llm-table td.key {
+                padding: 8px 16px 8px 8px;
+                font-weight: 600;
+                color: #495057;
+                white-space: nowrap;
+                vertical-align: top;
+                width: 1%;
+                text-transform: uppercase;
+                font-size: 11px;
+                letter-spacing: 0.05em;
+            }
+            .llm-table td.val {
+                padding: 8px;
+                color: #212529;
+                word-break: break-word;
+            }
+            .llm-table td.val pre {
+                margin: 0;
+                background: #e9ecef;
+                padding: 6px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                white-space: pre-wrap;
+            }
+        </style>
 
         <script>
-            async function sendTask() {
-                const task = document.getElementById("taskInput").value;
-                const response = await fetch("/task", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({task: task})
-                });
-                const data = await response.json();
-                document.getElementById("status").innerText = "Sent: " + data.task;
-                document.getElementById("taskInput").value = "";
+
+        async function sendTask() {
+            const task = document.getElementById("taskInput").value;
+
+            const response = await fetch("/task", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({task: task})
+            });
+
+            const data = await response.json();
+            document.getElementById("status").innerHTML =
+                `<span style="color:#888; font-style:italic; font-family:sans-serif;">Task sent: <strong>${data.task}</strong> — waiting for LLM response...</span>`;
+            document.getElementById("taskInput").value = "";
+        }
+
+        const source = new EventSource("/stream");
+
+        source.onmessage = function(event) {
+            // Ignore keepalive pings
+            if (event.data === "ping") return;
+            console.log("LLM message:", event.data);
+
+            const container = document.getElementById("status");
+            container.style.cssText = "font-family:'Segoe UI',sans-serif; background:#f8f9fa; border:1px solid #dee2e6; border-radius:6px; padding:12px;";
+
+            try {
+                const parsed = JSON.parse(event.data);
+                let html = '<table class="llm-table">';
+                for (const [key, value] of Object.entries(parsed)) {
+                    const displayVal = typeof value === "object"
+                        ? `<pre>${JSON.stringify(value, null, 2)}</pre>`
+                        : value;
+                    html += `<tr><td class="key">${key}</td><td class="val">${displayVal}</td></tr>`;
+                }
+                html += '</table>';
+                container.innerHTML = html;
+            } catch (e) {
+                // Fallback: plain text if not JSON
+                container.textContent = event.data;
             }
+        };
+
+        source.onerror = function(e) {
+            console.warn("SSE connection error, reconnecting...", e);
+        };
+
         </script>
     </body>
     </html>
     """
 
+
+# --------- Receive user tasks ---------
 @app.post("/task")
 def add_task(req: TaskRequest):
-    """
-    Receive a task from the user (POST /task {"task": "pick up cube1"})
-    """
+    print("Received task:", req.task)
     task_queue.put(req.task)
     return {"status": "task received", "task": req.task}
 
+
+# --------- Robot polls this ---------
 @app.get("/next_task")
 def next_task():
     if not task_queue.empty():
-        return {"task": task_queue.get()}
+        task = task_queue.get()
+        print("Robot fetched task:", task)
+        return {"task": task}
     return {"task": None}
 
-# --------- Background thread to run FastAPI ---------
+
+# --------- Receive robot / LLM response ---------
+@app.post("/llm_response")
+def receive_llm_response(data: dict):
+
+    # Convert JSON → single line string (SSE safe)
+    message = json.dumps(data)
+
+    print("LLM PLAN RECEIVED:", message)
+
+    llm_messages.put(message)
+
+    return {"status": "received"}
+
+
+# --------- Stream messages to browser ---------
+@app.get("/stream")
+def stream():
+
+    def event_stream():
+        while True:
+            try:
+                # Wait up to 15 seconds for a message
+                message = llm_messages.get(timeout=15)
+                yield f"data: {message}\n\n"
+            except queue.Empty:
+                # Send a keepalive ping so the browser doesn't time out
+                yield "data: ping\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # Disables Nginx buffering if behind a proxy
+        }
+    )
+
+
+# --------- Start API in background ---------
 def start_api():
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
+
 threading.Thread(target=start_api, daemon=True).start()
 
-# ---------- Main loop: print tasks from queue ----------
 print("Server running on http://localhost:8000")
+
 while True:
-    if not task_queue.empty():
-        task = task_queue.get()
-        print("Got task:", task)
-    time.sleep(0.1)  # avoid busy waiting
+    time.sleep(1)
