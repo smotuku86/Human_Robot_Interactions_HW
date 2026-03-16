@@ -1,0 +1,89 @@
+Brainstorm ways for everyday users to make the robot do what they want.
+List the desired characteristics for your assistive robot.
+
+The easiest way is probably for users to talk to the robot and have it
+ move to goals and perform the requested actions. Another option would
+ be to allow users to click in the environment to give the robot waypoints 
+ and have it determine whether it should grasp or release objects based on 
+ its location (for example, near a block → grasp; holding a block over a cabinet → release).
+
+I decided to implement a text-based prompt where the user can ask the robot to perform a step. The
+ robot will assist until it believes that step is completed, and it will not provide further 
+ assistance until it receives the next request.
+
+I will track a score that increases when cubes are placed in the boxes. I will also increment the 
+score for the first successful open and close of both the microwave and the cabinet.
+
+Score:
+
++1 for the first successful open/close of the microwave and cabinet
++1 for each cube placed inside the microwave or cabinet
+Maximum score per round is 5 (assuming cubes are not removed and placed back in to double count the score)
+
+Results:
+person1_unassisted_scores = [4, 3, 4]
+person1_assisted_scores = [2, 0, 3]
+
+person1_unassisted_time = [448, 562, 431]
+person1_assisted_time = [490, 519, 532]
+
+Tests took approximately 7–8 minutes. I asked users to finish around the 7-minute mark.
+
+Results Analysis:
+
+We conducted a t-test comparing the assisted user time and score to the unassisted version.
+
+Our hypotheses were:
+
+    Assisted scores would be higher than unassisted scores.
+    Assisted completion time would be lower than unassisted completion time.
+
+Both hypotheses were incorrect.
+
+The p-value for the score t-test was 0.9629, which indicates that the 
+ unassisted scores were statistically better than the assisted scores. 
+ This makes sense because the unassisted trials had higher scores overall.
+
+The time hypothesis resulted in a p-value of 0.2544, suggesting that time 
+ did not have a statistically significant effect on the results. This also 
+ makes sense, as both assisted and unassisted trials took roughly the same 
+ amount of time to complete.
+
+There are many ways this system could be improved. I believe the main issue 
+was that the LLM outputted coordinates for the robot to move to. While the 
+LLM is good at reasoning, it sometimes struggles to convert that reasoning 
+into precise coordinates and perform path planning.
+
+To improve this, I would change the system so the LLM provides high-level 
+plans instead of raw coordinates. These plans would call predefined functions. 
+We would then implement the code inside these functions to handle the parts the 
+LLM struggled with, such as choosing safe paths and calculating the correct 
+coordinates for the robot to move to.
+
+By separating the high-level reasoning (LLM) from the low-level motion planning 
+(code), the robot would likely perform tasks more reliably and consistently.
+
+
+Test Feedback:
+Person 1: 
+For the unassisted portion, the arm felt very difficukt to use. It was espessially difficult to use when 
+the camera was not in the upright position. It was hard to figure out where the robot arm was in relative to 
+other objects without constantly changing the camera angle, which took up unnecessary time. The other issue I
+found with the arm was that its physics did not replicate real life. When lowering the arm onto the table
+the arm broke every time. This made it difficult because I had to place the arm perfectly to pick up the block 
+without hitting the table. The arm not following real life physics made the arm do things I did not expect,
+which made it harder to use.
+
+For the assisted portion, doing the task of putting the block into the cabinate was much easier. I would
+tell the LLM to open the cabinet and the arm would move exactly where I wanted it to and I just had to click
+the button to close the arm. However, there was sometimes issues when the arm had to pick up a block.
+It would sometimes go into the table which made the arm glitch out. Other times the arm worked perfectly fine. 
+After picking up the block the arm would perfectly move over the cabinate everytime. The only issue I had was
+the arm would move to the cabinet linierly meaning you would need to adjust the arm backwards every couple
+seconds in order to make sure the arm did not colide with the cabinet. Overall the assisted robot arm with the
+LLM was much easier to control than the unassisted version.
+
+
+AI logs:
+https://chatgpt.com/share/69af5f46-c034-8004-b9f1-32c423659e27
+https://claude.ai/share/906e2795-5381-427b-b04a-bd3257f0e2f3 

@@ -1,7 +1,0 @@
-tests are soft capped at 6 mins - so around 6 minutes users will be asked to finish up
-and the score will be taken
-
-
-Person 1: 
-unassisted was easy
-assisted, it missed picking the cube up and that delay killed the run
