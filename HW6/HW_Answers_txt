@@ -1,0 +1,10 @@
+Try initializing the cubes closer together or farther apart. How does this affect the human's understanding of the robot's goal?
+
+    The closer they are, the harder or less confident the human is on what the goal is during the run. If they are spread apart, it is much easier for the human to be confident of the goal during the run
+
+Exaggerate the robot's motion so that it quickly conveys its goal. Is it better for the robot to exaggerate its motion at the start or end of the trajectory?
+
+/work on scale first
+
+Find a trade-off between legible motion and task completion.
+Scale up your code so that it works for three cubes.
