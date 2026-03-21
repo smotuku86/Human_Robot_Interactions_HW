@@ -48,7 +48,7 @@ def get_object_goals(cubes):
 def human_model(action, robot_pos, cubes, chosen_cube, beta=1.0):
     #action: zeta, next planned move
     
-    goal_probabilty = []
+    goal_probabilty = {}
     for cube in cubes:
         cube_state = get_cube_state(cubes, cube)
         cube_pos = cube_state["position"]
@@ -62,13 +62,24 @@ def human_model(action, robot_pos, cubes, chosen_cube, beta=1.0):
         goal_probabilty[obj_name] = goal_probabilty[obj_name] / total
 
     P_chosen_cube = goal_probabilty[chosen_cube]
-    return P_chosen_cube
+    return P_chosen_cube, goal_probabilty
 
-def goal_probabilty(action, robot_pos, cubes, chosen_cube, beta=1.0,P):
-    #Update the prior?
+def goal_probabilty(action, robot_pos, cubes, chosen_cube, Prior, beta=1.0):
+    #Update the prior
     #might make a function
+    P1 = Prior
+    #print("P1",P1)
 
-    return
+    prob_chosen_cube, prob_all_cubes = human_model(action, robot_pos, cubes, chosen_cube, beta)
+    #print("prob cubes", prob_all_cubes)
+    for PI_key in P1:
+        P1[PI_key] = Prior[PI_key] * prob_all_cubes[PI_key]
+
+    #normalize
+    total = sum(P1.values())
+    for obj_name in P1.keys():
+        P1[obj_name] = P1[obj_name] / total
+    return P1
 
 # parameters
 control_dt = 1. / 240.
@@ -78,7 +89,7 @@ physicsClient = p.connect(p.GUI)
 p.setGravity(0, 0, -9.81)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 p.resetDebugVisualizerCamera(cameraDistance=1.0, 
-                                cameraYaw=40.0,
+                                cameraYaw=90.0,
                                 cameraPitch=-30.0, 
                                 cameraTargetPosition=[0.5, 0.0, 0.2])
 
@@ -89,14 +100,36 @@ table = p.loadURDF(os.path.join(urdfRootPath, "table/table.urdf"), basePosition=
 # load 3 cubes, randomly
 n_cubes = 3
 cubes = {}
+'''
 for cube_number in range(n_cubes):
-    cube_init_position = np.random.uniform([-0.5, -0.3, 0.025], [0.5, 0.3, 0.025], (3,))
+    cube_init_position = np.random.uniform([.1, -0.3, 0.025], [0.6, 0.3, 0.025], (3,))
     cube_init_angle = np.random.uniform([0, 0, 0], [0, 0, np.pi/2], (3,))
     cube = p.loadURDF(os.path.join(urdfRootPath, "cube_small.urdf"), 
                             basePosition=cube_init_position,
                             baseOrientation=p.getQuaternionFromEuler(cube_init_angle))
     cubes[cube_number] = cube
 #print(cubes)
+'''
+
+y_spacing = 0.3 # Distance between cubes in the X direction
+
+for cube_number in range(n_cubes):
+    # Define base position
+    # x starts at 0.1 and increases by x_spacing for each cube
+    # y and z remain fixed
+    cube_init_position = np.array([0.5, (cube_number * y_spacing) + -0.3, 0.025])
+    
+    # Define rotation angles (Euler)
+    cube_init_angle = np.array([0, 0, 0]) # Cube_init_angle = np.array([0, 0, cube_init_angle[2]]) # Optional: vary rotation?
+    
+    # Create the URDF cube
+    # Note: Ensure urdfRootPath is defined
+    cube = p.loadURDF(os.path.join(urdfRootPath, "cube_small.urdf"), 
+                       basePosition=cube_init_position,
+                       baseOrientation=p.getQuaternionFromEuler(cube_init_angle))
+    
+    # Add the cube to the list
+    cubes[cube_number] = cube
 
 # load the robot
 jointStartPositions = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.04, 0.04]
@@ -107,43 +140,62 @@ panda = Panda(basePosition=[0, 0, 0],
 
 # main loop
 action_magnitude = 0.1
-P = np.array([0.5, 0.5])
-for idx in range(500):
+
+#initialize goal probabilty
+intended_goal = 0
+prob_goals = {}
+for cube_number in cubes:
+    prob_goals[cube_number] = 1/n_cubes
+
+for idx in range(1000):
 
     # get the position of the robot and the cubes
     robot_state = panda.get_state()
     robot_pos = np.array(robot_state["ee-position"])
 
     #propose an action for the robot
-    chosen_cube = 0
-    chosen_cube_pos = get_cube_state(cubes,chosen_cube)["position"]
+    chosen_cube_pos = get_cube_state(cubes,intended_goal)["position"]
     n_samples = 100
-    action_set = 2 * action_magnitude + (np.random(n_samples,3) - .5)
-
-    best_action = []
+    action_set = 1 * action_magnitude + (np.random.rand(n_samples,3) - .5)
+    #print(action_set)
+    best_legible_action = []
     best_score = 0
     for action in action_set:
+        #print("action:", action)
         #find probabilty of goal being the chosen cube
         #given an action
-        P1 = human_model(action, robot_pos, cubes, chosen_cube, beta=1.0)
+        P1, prob_all_cubes = human_model(action, robot_pos, cubes, intended_goal, beta=1)
         if P1 > best_score:
             best_score = P1
-            best_action = action
+            best_legible_action = action
 
     # the robot's action going straight to goal
-    action = chosen_cube_pos - robot_pos
-    if np.linalg.norm(action) > action_magnitude:
-        action *= action_magnitude / np.linalg.norm(action)
+    goal_seek_action = chosen_cube_pos - robot_pos
+    if np.linalg.norm(goal_seek_action) > action_magnitude:
+        goal_seek_action = action_magnitude * (goal_seek_action/ np.linalg.norm(goal_seek_action))
+
+    if np.linalg.norm(best_legible_action) > action_magnitude:
+        best_legible_action = action_magnitude * ( best_legible_action / np.linalg.norm(best_legible_action) )
+
+    
+    
+    
+  
+    print("timestep:", idx, " human's belief over the cubes:", np.round(list(prob_goals.values()), 2))
+
+    #blend legible action with goal seeking
+    alpha = prob_goals[intended_goal]
+    #print("goals", prob_goals)
+    #print("alpha",alpha)
+
+    #print("mag legible vs normal", np.linalg.norm(best_legible_action), " vs", np.linalg.norm(goal_seek_action))
+
+    robot_action = (1-alpha) * best_legible_action + alpha * goal_seek_action
 
     # update human estimate of the goal
-    prob_cube1 = human_model(action, robot_pos, cubes, 1, beta=0.25)
-    P[0] *= prob_cube1
-    P[1] *= (1 - prob_cube1)
-    P /= np.sum(P)
-    print("timestep:", idx, " human's belief over the cubes:", np.round(P, 2))
-
+    prob_goals = goal_probabilty(robot_action, robot_pos, cubes, intended_goal, prob_goals, beta=.25)
     # take the action
-    panda.move_to_pose(robot_pos + action, ee_rotz=0, positionGain=0.01)
+    panda.move_to_pose(robot_pos + robot_action, ee_rotz=0, positionGain=0.01)
 
     p.stepSimulation()
     time.sleep(control_dt)

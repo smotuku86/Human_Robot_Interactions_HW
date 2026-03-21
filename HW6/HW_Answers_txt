@@ -4,7 +4,11 @@ Try initializing the cubes closer together or farther apart. How does this affec
 
 Exaggerate the robot's motion so that it quickly conveys its goal. Is it better for the robot to exaggerate its motion at the start or end of the trajectory?
 
-/work on scale first
+    Definately the start because the human model bases the judgement based off distance to cube, so the closer we get at the start, the more liekly they can guess the robot's goal correctly.
 
 Find a trade-off between legible motion and task completion.
-Scale up your code so that it works for three cubes.
+
+    I blended the legible and task-completion actions, with the weighting based on the human's confidence in the goal. At a low weight, the robot focuses on legible movement to convey its goal to the human. Once the weight increases, the robot shifts towards reaching the goal.
+
+Scale up your code so that it works for three cubes. 
+    I used the 'cubes' variable to store cube information and utilized my previous custom cube/goal functions for handling multi-cube probability calculations, which were modified to be based on distances to the cubes without looking at robot movement. Each action was assigned a probability indicating how likely it was to achieve the goal. As the robot moved, these probabilities updated the prior for the next iteration.
