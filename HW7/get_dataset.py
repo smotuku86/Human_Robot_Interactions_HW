@@ -66,5 +66,5 @@ for demo_idx in range(n_demos):
         time.sleep(control_dt)
 
 # save the dataset of demonstrations
-pickle.dump(dataset, open("dataset.pkl", "wb"))
+pickle.dump(dataset, open("HW7/dataset.pkl", "wb"))
 print("dataset has this many state-action pairs:", len(dataset))
