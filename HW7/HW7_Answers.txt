@@ -1,0 +1,41 @@
+1. Familiarize yourself with the code. Determine how to modify each of the following parameters, 
+and explain what changing those parameters will do:
+	- The number of hidden layers and the size of each layer
+	- The number of epochs and the learning rate
+	- The batch size
+
+    The hidden layers are basically a layers of nodes that have certain wieghts that determine 
+    how important certian inputs. These weights change as they are trained. The size of each layer
+    determines how many nodes each layer has. The larger the model, more more likely it can memorize
+    state-action pairs and overfit itself to the traingin data.
+
+    Typically 2 hidden layers can learn any non-linear function. 
+
+    The epoch is a part of training the model, it pretty much tells you how long to train for.
+
+    The learning rate tells us how much we can update the model wieghts by. Larger Learning rates 
+    can let you learn faster, but you might not be able to converge on a good solutions
+
+
+2. Train your robot to pick up blocks that are initialized in a small distribution (e.g., in a 
+radius of 0.1 meters). Then test your policy on a larger distribution (e.g., blocks anywhere on
+the table).
+
+    Trained on small dist, tested on large dist - 30% score ( 3/10 iterations were succesfull )
+
+    
+3. Repeat the previous step, but now switch the roles. Train on a wide distribution, and test on 
+a narrow distribution. Consider your results for both of these steps. What does this mean about 
+the training distribution?
+
+        Trained on large dist, tested on small dist - 80% score ( 8/10 iterations were succesfull )
+
+4. Vary the number of examples you use to train the robot's policy. Is more examples always better? 
+How does the robot work with just one or two examples in the training set?
+
+
+5. Implement a version of DAgger where users can interrupt the robot's learned policy and correct 
+its behavior. This corrected behavior should be added to the dataset and used for retraining the 
+policy. Instead of having an actual "user" correct the robot, you can have an expert policy (like 
+the one in get_dataset) take over to provide the correction.
+

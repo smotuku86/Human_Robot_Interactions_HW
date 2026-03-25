@@ -48,8 +48,10 @@ for demo_idx in range(n_demos):
 
     # reset the robot
     panda.reset(jointStartPositions)
-    cube_position = np.random.uniform([narrow_dist_x[0], narrow_dist_y[0], 0.025], 
-                                      [narrow_dist_x[1], narrow_dist_y[1], 0.025], (3,))
+    #cube_position = np.random.uniform([narrow_dist_x[0], narrow_dist_y[0], 0.025], 
+    #                                  [narrow_dist_x[1], narrow_dist_y[1], 0.025], (3,))
+    cube_position = np.random.uniform([broad_dist_x[0], broad_dist_y[0], 0.025], 
+                                      [broad_dist_x[1], broad_dist_y[1], 0.025], (3,))
     p.resetBasePositionAndOrientation(cube, cube_position, p.getQuaternionFromEuler([0, 0, 0]))
 
     # run sequence of position and gripper commands
@@ -75,5 +77,5 @@ for demo_idx in range(n_demos):
     print(round(demo_idx/n_demos,2)*100, "% done")
 
 # save the dataset of demonstrations
-pickle.dump(dataset, open("HW7/dataset.pkl", "wb"))
+pickle.dump(dataset, open("HW7/Broad_dataset.pkl", "wb"))
 print("dataset has this many state-action pairs:", len(dataset))

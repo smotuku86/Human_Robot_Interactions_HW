@@ -34,6 +34,7 @@ cube = p.loadURDF(os.path.join(urdfRootPath, "cube_small.urdf"),
                   basePosition=np.random.uniform([broad_dist_x[0], broad_dist_y[0], 0.025], 
                                                  [broad_dist_x[1], broad_dist_y[1], 0.025], (3,)))
 
+
 # load the robot
 jointStartPositions = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.04, 0.04]
 panda = Panda(basePosition=[0, 0, 0],
@@ -42,19 +43,24 @@ panda = Panda(basePosition=[0, 0, 0],
 
 # load the trained model
 model = MLPPolicy(state_dim=6, hidden_dim=64, action_dim=3)
-model.load_state_dict(torch.load('HW7/narrow_model_weights'))
+model.load_state_dict(torch.load('HW7/Broad_model_weights'))
 model.eval()
 
 # test and see how your learned policy does!
 n_tests = 10
 action_magnitude = 0.1
+score = 0
 for test_idx in range(n_tests):
 
     # reset the robot
     panda.reset(jointStartPositions)
-    cube_position = np.random.uniform([0.3, -0.3, 0.025], [0.7, +0.3, 0.025])
+    #cube_position = np.random.uniform([broad_dist_x[0], broad_dist_y[0], 0.025], 
+    #                                  [broad_dist_x[1], broad_dist_y[1], 0.025], (3,))
+    cube_position = np.random.uniform([narrow_dist_x[0], narrow_dist_y[0], 0.025], 
+                                      [narrow_dist_x[1], narrow_dist_y[1], 0.025], (3,))
     p.resetBasePositionAndOrientation(cube, cube_position, p.getQuaternionFromEuler([0, 0, 0]))
 
+    init_cube_pos = cube_position
     # run sequence of position and gripper commands
     for time_idx in range (1000):
 
@@ -76,3 +82,16 @@ for test_idx in range(n_tests):
         panda.move_to_pose(robot_pos + action, ee_rotz=0, positionGain=0.01)
         p.stepSimulation()
         time.sleep(control_dt)
+    
+    
+    #check to see if robot reached cube position
+    robot_end_pos = panda.get_state()['ee-position']
+    robot_2_cube = np.linalg.norm(robot_end_pos - init_cube_pos)
+    #and check to see if cube moved
+    cube_end_position = p.getBasePositionAndOrientation(cube)[0]
+    cube_dist_moved = np.linalg.norm(cube_end_position - init_cube_pos)
+    
+    if robot_2_cube < 1e-2 and cube_dist_moved < 1e-2: #within 1 mm
+        score += 1
+
+print("Score:", round(score/n_tests, 2)*100, "Percent") 
