@@ -11,7 +11,8 @@ from robot import Panda
 control_dt = 1. / 240.
 
 # create simulation and place camera
-physicsClient = p.connect(p.GUI)
+print("Starting dataset collection")
+physicsClient = p.connect(p.DIRECT)
 p.setGravity(0, 0, -9.81)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 p.resetDebugVisualizerCamera(cameraDistance=1.0, 
@@ -24,6 +25,12 @@ urdfRootPath = pybullet_data.getDataPath()
 plane = p.loadURDF(os.path.join(urdfRootPath, "plane.urdf"), basePosition=[0, 0, -0.625])
 table = p.loadURDF(os.path.join(urdfRootPath, "table/table.urdf"), basePosition=[0.5, 0, -0.625])
 cube = p.loadURDF(os.path.join(urdfRootPath, "cube_small.urdf"), basePosition=[0.5, 0, 0.025])
+
+narrow_dist_x = [.3, .4]
+narrow_dist_y = [-.1, .1]
+
+broad_dist_x = [.1, .7]
+broad_dist_y = [-.4, .4]
 
 # load the robot
 jointStartPositions = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.04, 0.04]
@@ -41,7 +48,8 @@ for demo_idx in range(n_demos):
 
     # reset the robot
     panda.reset(jointStartPositions)
-    cube_position = np.random.uniform([0.3, -0.3, 0.025], [0.7, +0.3, 0.025])
+    cube_position = np.random.uniform([narrow_dist_x[0], narrow_dist_y[0], 0.025], 
+                                      [narrow_dist_x[1], narrow_dist_y[1], 0.025], (3,))
     p.resetBasePositionAndOrientation(cube, cube_position, p.getQuaternionFromEuler([0, 0, 0]))
 
     # run sequence of position and gripper commands
@@ -64,6 +72,7 @@ for demo_idx in range(n_demos):
         panda.move_to_pose(robot_pos + action, ee_rotz=0, positionGain=0.01)
         p.stepSimulation()
         time.sleep(control_dt)
+    print(round(demo_idx/n_demos,2)*100, "% done")
 
 # save the dataset of demonstrations
 pickle.dump(dataset, open("HW7/dataset.pkl", "wb"))

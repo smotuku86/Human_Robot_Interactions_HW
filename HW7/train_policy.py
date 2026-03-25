@@ -61,4 +61,4 @@ def train_model(loadname):
 
 # train models
 if __name__ == "__main__":
-    train_model("HW7/dataset.pkl")
+    train_model("HW7/narrow_dataset.pkl")

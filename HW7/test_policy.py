@@ -20,11 +20,19 @@ p.resetDebugVisualizerCamera(cameraDistance=1.0,
                                 cameraPitch=-30.0, 
                                 cameraTargetPosition=[0.5, 0.0, 0.2])
 
+narrow_dist_x = [.3, .4]
+narrow_dist_y = [-.1, .1]
+
+broad_dist_x = [.1, .6]
+broad_dist_y = [-.4, .4]
+
 # load the objects
 urdfRootPath = pybullet_data.getDataPath()
 plane = p.loadURDF(os.path.join(urdfRootPath, "plane.urdf"), basePosition=[0, 0, -0.625])
 table = p.loadURDF(os.path.join(urdfRootPath, "table/table.urdf"), basePosition=[0.5, 0, -0.625])
-cube = p.loadURDF(os.path.join(urdfRootPath, "cube_small.urdf"), basePosition=[0.5, 0, 0.025])
+cube = p.loadURDF(os.path.join(urdfRootPath, "cube_small.urdf"), 
+                  basePosition=np.random.uniform([broad_dist_x[0], broad_dist_y[0], 0.025], 
+                                                 [broad_dist_x[1], broad_dist_y[1], 0.025], (3,)))
 
 # load the robot
 jointStartPositions = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.04, 0.04]
@@ -34,7 +42,7 @@ panda = Panda(basePosition=[0, 0, 0],
 
 # load the trained model
 model = MLPPolicy(state_dim=6, hidden_dim=64, action_dim=3)
-model.load_state_dict(torch.load('HW7/model_weights'))
+model.load_state_dict(torch.load('HW7/narrow_model_weights'))
 model.eval()
 
 # test and see how your learned policy does!
