@@ -41,7 +41,7 @@ panda = Panda(basePosition=[0, 0, 0],
 
 # collect the demonstrations
 # these demonstrations move from the robot's home position to the cube position
-n_demos = 10
+n_demos = 20
 dataset = []
 action_magnitude = 0.1
 for demo_idx in range(n_demos):
@@ -77,5 +77,5 @@ for demo_idx in range(n_demos):
     print(round(demo_idx/n_demos,2)*100, "% done")
 
 # save the dataset of demonstrations
-pickle.dump(dataset, open("HW7/Broad_dataset.pkl", "wb"))
+pickle.dump(dataset, open("HW7/Broad_dataset_20.pkl", "wb"))
 print("dataset has this many state-action pairs:", len(dataset))

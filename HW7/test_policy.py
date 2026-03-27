@@ -43,7 +43,7 @@ panda = Panda(basePosition=[0, 0, 0],
 
 # load the trained model
 model = MLPPolicy(state_dim=6, hidden_dim=64, action_dim=3)
-model.load_state_dict(torch.load('HW7/Broad_model_weights'))
+model.load_state_dict(torch.load('HW7/Broad_model_weights_20'))
 model.eval()
 
 # test and see how your learned policy does!

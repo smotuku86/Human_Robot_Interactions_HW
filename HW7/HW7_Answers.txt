@@ -33,6 +33,10 @@ the training distribution?
 4. Vary the number of examples you use to train the robot's policy. Is more examples always better? 
 How does the robot work with just one or two examples in the training set?
 
+    With just a few, it performed pretty bad, and was only able to move to the cubes it saw in training.
+ With more examples, it preformed better, getting a 100% on the same test as question 3, 
+    all I did was double the number on examples it coudl train on. I'm sure at a certain point extra examples
+    would not be more benifical and just add to training time, like forexample if we gave 100 examples to train with. 
 
 5. Implement a version of DAgger where users can interrupt the robot's learned policy and correct 
 its behavior. This corrected behavior should be added to the dataset and used for retraining the 
