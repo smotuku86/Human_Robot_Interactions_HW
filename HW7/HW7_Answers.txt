@@ -1,45 +1,65 @@
 1. Familiarize yourself with the code. Determine how to modify each of the following parameters, 
 and explain what changing those parameters will do:
-	- The number of hidden layers and the size of each layer
-	- The number of epochs and the learning rate
-	- The batch size
+    - The number of hidden layers and the size of each layer
+    - The number of epochs and the learning rate
+    - The batch size
 
-    The hidden layers are basically a layers of nodes that have certain wieghts that determine 
-    how important certian inputs. These weights change as they are trained. The size of each layer
-    determines how many nodes each layer has. The larger the model, more more likely it can memorize
-    state-action pairs and overfit itself to the traingin data.
+    The hidden layers are essentially layers of nodes with weights that determine how important certain inputs are.
+    These weights change during training. The size of each layer determines how many nodes it contains. The larger
+    the model, the more likely it is to memorize state-action pairs and overfit to the training data. Can edit the 
+    size and number in the models.py file.
 
-    Typically 2 hidden layers can learn any non-linear function. 
+    Typically, two hidden layers can learn any non-linear function.
 
-    The epoch is a part of training the model, it pretty much tells you how long to train for.
+    An epoch is a unit of training that represents one full pass through the dataset. It essentially determines how
+    long the model is trained (along with batch size). These can be edited in the train_policy.py file
 
-    The learning rate tells us how much we can update the model wieghts by. Larger Learning rates 
-    can let you learn faster, but you might not be able to converge on a good solutions
+    The learning rate determines how much the model’s weights are updated during training. Larger learning rates allow
+    the model to learn faster, but they can make it harder to converge to a good solution. Optimizers like Adam
+    adaptively adjust this during training. This can be edited in the train_policy.py file
 
 
 2. Train your robot to pick up blocks that are initialized in a small distribution (e.g., in a 
 radius of 0.1 meters). Then test your policy on a larger distribution (e.g., blocks anywhere on
 the table).
 
-    Trained on small dist, tested on large dist - 30% score ( 3/10 iterations were succesfull )
-
+    Trained on small dist, tested on large dist - 30% score ( 3/10 iterations were successful )
     
 3. Repeat the previous step, but now switch the roles. Train on a wide distribution, and test on 
 a narrow distribution. Consider your results for both of these steps. What does this mean about 
 the training distribution?
 
-        Trained on large dist, tested on small dist - 80% score ( 8/10 iterations were succesfull )
+        Trained on large dist, tested on small dist - 80% score ( 8/10 iterations were successful )
 
 4. Vary the number of examples you use to train the robot's policy. Is more examples always better? 
 How does the robot work with just one or two examples in the training set?
 
-    With just a few, it performed pretty bad, and was only able to move to the cubes it saw in training.
- With more examples, it preformed better, getting a 100% on the same test as question 3, 
-    all I did was double the number on examples it coudl train on. I'm sure at a certain point extra examples
-    would not be more benifical and just add to training time, like forexample if we gave 100 examples to train with. 
+    With only a few examples, the model performed poorly and was only able to move to cubes it had seen
+    during training. With more examples, it performed better, achieving 100% on the same test as Question 3.
+    All I did was double the number of examples it could train on.
+
+    At some point, however, additional examples would likely stop being beneficial and would only increase
+    training time. For example, giving 100 training examples might not provide much improvement beyond a
+    certain threshold.
 
 5. Implement a version of DAgger where users can interrupt the robot's learned policy and correct 
 its behavior. This corrected behavior should be added to the dataset and used for retraining the 
 policy. Instead of having an actual "user" correct the robot, you can have an expert policy (like 
 the one in get_dataset) take over to provide the correction.
 
+    My version of takeover involved pressing the spacebar whenever I saw a deviation from what I
+    expected, allowing the "expert" controller to take over. That data was logged and added to the
+    training set used by the initial model. I then retrained the model and observed its performance
+    without any further intervention.
+
+    I started with a very extreme dataset containing only one example, and as expected, the model
+    would only move to that one location. After retraining, it was able to achieve about 60% on the
+    test, successfully reaching 6 out of 10 random blocks.
+
+Video Notes
+the titles say what distribution of cubes they got trained and tested on. The regular ones were trained of 10 examples, 10k state-action pairs. 
+The last one had 2x the examples, 20 examples, 20K state-action pairs. I didn't change other parameters for these examples to keep 
+results correlated to those specific changes. 
+
+Chat log-
+    https://chatgpt.com/share/69c75909-f1c4-8332-ae99-1bdf9da86157

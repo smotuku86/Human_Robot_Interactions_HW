@@ -6,6 +6,8 @@ import time
 import pickle
 from robot import Panda
 
+#load pickle file to test
+pickle_file_name = "HW7/Broad_dataset_1example.pkl"
 
 # parameters
 control_dt = 1. / 240.
@@ -41,7 +43,7 @@ panda = Panda(basePosition=[0, 0, 0],
 
 # collect the demonstrations
 # these demonstrations move from the robot's home position to the cube position
-n_demos = 20
+n_demos = 1
 dataset = []
 action_magnitude = 0.1
 for demo_idx in range(n_demos):
@@ -74,8 +76,8 @@ for demo_idx in range(n_demos):
         panda.move_to_pose(robot_pos + action, ee_rotz=0, positionGain=0.01)
         p.stepSimulation()
         time.sleep(control_dt)
-    print(round(demo_idx/n_demos,2)*100, "% done")
+    print(round((demo_idx+1)/n_demos,2)*100, "% done")
 
 # save the dataset of demonstrations
-pickle.dump(dataset, open("HW7/Broad_dataset_20.pkl", "wb"))
+pickle.dump(dataset, open(pickle_file_name, "wb"))
 print("dataset has this many state-action pairs:", len(dataset))

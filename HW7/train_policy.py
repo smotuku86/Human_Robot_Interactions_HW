@@ -57,8 +57,9 @@ def train_model(loadname):
             
         if epoch % 500 == 0:
             print(epoch, loss.item())
-            torch.save(model.state_dict(), "HW7/Broad_model_weights_20")
+            torch.save(model.state_dict(), "HW7/Broad_model_weights_1example_aftercorrections")
 
 # train models
 if __name__ == "__main__":
-    train_model("HW7/Broad_dataset_20.pkl")
+    #train_model("HW7/Broad_dataset_1example.pkl")
+    train_model("HW7/Broad_dataset_1example_with_corrections.pkl")
