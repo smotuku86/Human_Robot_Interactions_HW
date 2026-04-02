@@ -74,8 +74,8 @@ def train_model(loadname):
             
         if epoch % 500 == 0:
             print(epoch, loss.item())
-            torch.save(model.state_dict(), "model_weights")
-    torch.save(model.state_dict(), "model_weights")
+            torch.save(model.state_dict(), "HW8/default_model_weights")
+    torch.save(model.state_dict(), "default_model_weights")
 
     #plt.plot(LOSS)
     #plt.show()
