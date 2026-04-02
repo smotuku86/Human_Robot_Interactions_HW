@@ -28,6 +28,8 @@ class Encoder(nn.Module):
                                      nn.Dropout(0.5),
                                      nn.Flatten(start_dim=1))
 
+        #dropout randomly sets some weights to 0 - helps in countering overfitting
+
         # fully connected linear layer for projection
         self.lin_1 = nn.Linear(64, 100)
         self.lin_2 = nn.Linear(100, 50)
@@ -67,6 +69,7 @@ class MLPPolicy(nn.Module):
         ## helper functions
         # relu activation function
         self.relu = nn.ReLU()
+        self.mse_loss = nn.MSELoss()
 
     ## execute robot policy
     # input state output action

@@ -66,7 +66,6 @@ def train_model(loadname):
 
             # compute the loss between actual and predicted
             loss = model.mse_loss(actions, actions_hat)
-            LOSS.append(loss.item())
                  
             # update model parameters
             optimizer.zero_grad()
@@ -78,9 +77,9 @@ def train_model(loadname):
             torch.save(model.state_dict(), "model_weights")
     torch.save(model.state_dict(), "model_weights")
 
-    plt.plot(LOSS)
-    plt.show()
+    #plt.plot(LOSS)
+    #plt.show()
 
 # train models
 if __name__ == "__main__":
-    train_model("dataset.pkl")
+    train_model("HW8/default_dataset.pkl")

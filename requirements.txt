@@ -8,3 +8,5 @@ fastapi
 uvicorn
 scipy
 torch
+torchvision
+matplotlib
