@@ -15,24 +15,63 @@ Red - Tested on Multicolor
 
 50Multicolored - Tested on Multicolor
 50multicolor (32500 SA pairs)- 0%
+50broad_multicolor (32500 SA pairs)- 0% - had some robot movement towards goals
+100broad_multicolor (80000 SA pairs)- 0% all 3 versions
+                                             v2  had the arm move towards blocks
 
-1. I traing multiple datasets with varing amounts of examples. in our previous HW, we saw that a model with 20k SA 
-(State-Action) pairs we got a score of 80%. Here, our model "50red" got a score of 70% with 25k SA pairs. It needed more data
-to perform similary to our previous imitation learing method. I'm not too suprised by this as Hw7's impllimentation was directly
-trained on robot and cube position pairs, so all the model had to do was map the pairs to actiosn. This implimentation is more 
-difficult to do that becasue instead of using position, the computer has to infer actions based upon 2 images. There is mnore information
-to proccess and therefore harder to extract important data that can be used to output good actions.\
+1.  I trained multiple datasets with varying numbers of examples. In our
+    previous homework, we saw that a model with 20k state-action (SA)
+    pairs achieved a score of 80%. Here, our model, “50red,” achieved a
+    score of 70% with 25k SA pairs. It needed more data to perform
+    similarly to our previous imitation learning method. I am not too
+    surprised by this because HW7’s implementation was trained directly
+    on robot and cube position pairs, so all the model had to do was map
+    those pairs to actions. This implementation is more difficult
+    because, instead of using positions, the computer has to infer
+    actions from two images. There is more information to process, and
+    it is therefore harder to extract the important data needed to
+    output good actions.
 
-2. The first video, "50red tested on blue cubes" tested our 50 red cube dataset on just blue cubes. It didn't know what to do, and
-it got lucky once - hence the 10% success rate. The second video, "50red tested on multicolor cubes" preformed just as bad, and even missed
-a red cube! The models did always go down, so at least they all got closer to the cubes then at the start, but they didn't seem to 
-know what to do after. The last video had a model that was trained on different color cubes called, "50multicolor tested on 
-multicolor," taht yeilded very interesting results, it got a 0%! It still didn't know what to do. I think the model still cared about 
-the color of the block it saw, and maybe it saw new colors in the testing and didn't knoe how to react. I decided to gather a dataset
-where teh block changed color every step in the training dist, i called this broad_multicolor, and tested it on different color cubes
-that did not change very step, but every round (like normal). Unfortunately this also didn't seem to work, even when the model got to train for longer.
-Sometimes, it seemed like it woudl go to the box, which showed improvement compared to always going straight down, and this led me to believe
-that the model needed more data. I retrained this model but with 100 examples and it had 80K SA pairs. The largest and most diverse training data
-I had made.
+2.  The first video, “50red tested on blue cubes,” tested our
+    50-red-cube dataset on only blue cubes. It did not know what to do,
+    and it got lucky once—hence the 10% success rate. The second video,
+    “50red tested on multicolor cubes,” performed just as badly and even
+    missed a red cube. The models did always move downward, so at least
+    they all got closer to the cubes than where they started, but they
+    did not seem to know what to do after that. The last video used a
+    model trained on different colored cubes called “50multicolor tested
+    on multicolor,” which yielded very interesting results: it got a 0%.
+    It still did not know what to do. I think the model still cared
+    about the color of the block it saw, and maybe it encountered new
+    colors during testing and did not know how to react. I decided to
+    gather a dataset where the block changed color every step in the
+    training distribution. I called this dataset broad_multicolor and
+    tested it on different colored cubes that did not change every step,
+    but instead changed every round (like normal). Unfortunately, this
+    also did not seem to work, even when the model was allowed to train
+    longer. Sometimes it seemed like it would move toward the box, which
+    showed improvement compared to always moving straight down, and this
+    led me to believe that the model needed more data. I retrained this
+    model with 100 examples, giving it 80k SA pairs—the largest and most
+    diverse training dataset I had made. Unfortunately, this still did
+    not help, so I then considered that the way the model was trained
+    might not be ideal. I trained one model with more epochs (v1) and
+    another with a smaller learning rate (v2), thinking the loss
+    function might be bouncing around and unable to converge. V1 was no
+    good. V2 showed movement toward the blocks, but it had trouble with
+    precise movement near them. I think adding more data and letting it
+    train a little longer would help with that. I woudl do this, but 
+    training took around 2hrs, and adding more data and training for longer
+    is very time consuming, so I left it at this. 
 
-3. The training distribution is incredibly important, but so are the number of examples and amount of good training data
+3.  The training distribution is incredibly important, but so are the
+    number of examples and the amount of good training data. The broad
+    distribution still struggled to reach the blue blocks despite having
+    almost 3x the training data. I think this is because the model still
+    seems to care about block color. So when it saw blue, I assume it
+    was trying to draw from how it had previously reacted to blue blocks
+    rather than simply trying to reach a block in general. This would
+    limit the model’s ability to reach blue blocks. If we know we are 
+    only picking up one color cube, I'd train it on just red or varaints 
+    of red whihc reduce the burden on the model to care about color and
+    focus more on actaully moving the robot closer to the cubes.
