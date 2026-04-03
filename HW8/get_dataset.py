@@ -47,7 +47,8 @@ urdfRootPath = pybullet_data.getDataPath()
 plane = p.loadURDF(os.path.join(urdfRootPath, "plane.urdf"), basePosition=[0, 0, -0.625])
 table = p.loadURDF(os.path.join(urdfRootPath, "table/table.urdf"), basePosition=[0.5, 0, -0.625])
 cube = p.loadURDF(os.path.join(urdfRootPath, "cube_small.urdf"), basePosition=[0.5, 0, 0.025])
-p.changeVisualShape(cube, -1, rgbaColor=[1, 0, 0, 1])      # change cube color
+cube_color = np.random.uniform([0, 0, 0, 1], [1, 1, 1, 1])
+p.changeVisualShape(cube, -1, rgbaColor=cube_color)      # change cube color
 
 # load the robot
 jointStartPositions = [0.0, 0.0, 0.0, -2*np.pi/4, 0.0, np.pi/2, np.pi/4, 0.0, 0.0, 0.04, 0.04]
@@ -61,7 +62,7 @@ panda = Panda(basePosition=[0, 0, 0],
 # fig, im_static, im_ee = setup_camera_fig()
 # collect the demonstrations
 # these demonstrations move from the robot's home position to the cube position
-n_demos = 50
+n_demos = 100
 dataset = []
 action_magnitude = 1.0
 for demo_idx in tqdm(range(n_demos)):
@@ -70,9 +71,14 @@ for demo_idx in tqdm(range(n_demos)):
     panda.reset(jointStartPositions)
     cube_position = np.random.uniform([0.3, -0.3, 0.025], [0.7, +0.3, 0.025])
     p.resetBasePositionAndOrientation(cube, cube_position, p.getQuaternionFromEuler([0, 0, 0]))
+    cube_color = np.random.uniform([0, 0, 0, 1], [1, 1, 1, 1]) 
+    p.changeVisualShape(cube, -1, rgbaColor=cube_color)      # change cube color
 
     # run sequence of position and gripper commands
-    for time_idx in range (1000):
+    for time_idx in range (800):
+        
+        cube_color = np.random.uniform([0, 0, 0, 1], [1, 1, 1, 1]) 
+        p.changeVisualShape(cube, -1, rgbaColor=cube_color)      # change cube color
 
         # get the robot's position
         robot_state = panda.get_state()
@@ -96,9 +102,9 @@ for demo_idx in tqdm(range(n_demos)):
         panda.move_to_pose(robot_pos + action, ee_rotz=0, positionGain=0.01)
         p.stepSimulation()
         time.sleep(control_dt)
-    print( (demo_idx+1) /n_demos, "% done")
+    print( (demo_idx+1) /n_demos * 100, "% done")
 
 # save the dataset of demonstrations
-pickle.dump(dataset, open("HW8/default_dataset.pkl", "wb"))
+pickle.dump(dataset, open("HW8/datasets/dataset_100_broad_multicolor.pkl", "wb"))
 print("dataset has this many state-action pairs:", len(dataset))
 

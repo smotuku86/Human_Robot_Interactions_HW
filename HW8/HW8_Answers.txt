@@ -1,0 +1,38 @@
+Testing Results:
+Red - trained on only red
+100red(50000 SA pairs)- 30%
+100red (5x Epoch)     - 50%
+100red(65000 SA pairs)- 20% - had increased epoch 10x, prob overfit to training
+50red (25000 SA pairs)- 70%
+25red (12500 SA pairs)- 60%
+10red (5000 SA pairs) - 40%
+
+Red - Tested on Blue
+50red (25000 SA pairs)- 10%
+
+Red - Tested on Multicolor
+50red (25000 SA pairs)- 0%
+
+50Multicolored - Tested on Multicolor
+50multicolor (32500 SA pairs)- 0%
+
+1. I traing multiple datasets with varing amounts of examples. in our previous HW, we saw that a model with 20k SA 
+(State-Action) pairs we got a score of 80%. Here, our model "50red" got a score of 70% with 25k SA pairs. It needed more data
+to perform similary to our previous imitation learing method. I'm not too suprised by this as Hw7's impllimentation was directly
+trained on robot and cube position pairs, so all the model had to do was map the pairs to actiosn. This implimentation is more 
+difficult to do that becasue instead of using position, the computer has to infer actions based upon 2 images. There is mnore information
+to proccess and therefore harder to extract important data that can be used to output good actions.\
+
+2. The first video, "50red tested on blue cubes" tested our 50 red cube dataset on just blue cubes. It didn't know what to do, and
+it got lucky once - hence the 10% success rate. The second video, "50red tested on multicolor cubes" preformed just as bad, and even missed
+a red cube! The models did always go down, so at least they all got closer to the cubes then at the start, but they didn't seem to 
+know what to do after. The last video had a model that was trained on different color cubes called, "50multicolor tested on 
+multicolor," taht yeilded very interesting results, it got a 0%! It still didn't know what to do. I think the model still cared about 
+the color of the block it saw, and maybe it saw new colors in the testing and didn't knoe how to react. I decided to gather a dataset
+where teh block changed color every step in the training dist, i called this broad_multicolor, and tested it on different color cubes
+that did not change very step, but every round (like normal). Unfortunately this also didn't seem to work, even when the model got to train for longer.
+Sometimes, it seemed like it woudl go to the box, which showed improvement compared to always going straight down, and this led me to believe
+that the model needed more data. I retrained this model but with 100 examples and it had 80K SA pairs. The largest and most diverse training data
+I had made.
+
+3. The training distribution is incredibly important, but so are the number of examples and amount of good training data

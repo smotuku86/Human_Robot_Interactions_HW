@@ -4,12 +4,17 @@ import numpy as np
 from models import MLPPolicy
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
-
-
-
-
 import matplotlib.pyplot as plt
+from pathlib import Path
 
+def get_filename_no_ext(filepath):
+    return Path(filepath).stem
+
+#train this dataset
+dataset_filepath = "HW8/datasets/dataset_100_broad_multicolor.pkl"
+dataset_name = get_filename_no_ext(dataset_filepath)
+
+model_weights_filepath = Path("HW8/model_weights") / f"{dataset_name}_weights_v2"
 
 # import dataset for training
 class MyData(Dataset):
@@ -39,7 +44,7 @@ def train_model(loadname):
     # training parameters
     print(f"[-] training bc using device: {DEVICE}")
     EPOCH = 100
-    LR = 0.001
+    LR = 0.0005
 
     # initialize model and optimizer
     model = MLPPolicy(state_dim=3, hidden_dim=64, action_dim=3).to(DEVICE)
@@ -51,9 +56,8 @@ def train_model(loadname):
     BATCH_SIZE = 64
     print("my batch size is:", BATCH_SIZE)
     train_set = DataLoader(dataset=train_data, batch_size=BATCH_SIZE, shuffle=True)
-
-    # main training loop
     LOSS = []
+    # main training loop
     for epoch in tqdm(range(EPOCH)):
         for batch_id, batch in enumerate(train_set):
             batch = [k.to(DEVICE) for k in batch]
@@ -71,15 +75,18 @@ def train_model(loadname):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            
-        if epoch % 500 == 0:
-            print(epoch, loss.item())
-            torch.save(model.state_dict(), "HW8/default_model_weights")
-    torch.save(model.state_dict(), "default_model_weights")
 
-    #plt.plot(LOSS)
-    #plt.show()
+            LOSS.append(loss.item())
+            #print(epoch, loss.item())
+
+        if epoch % 500 == 0:
+            
+            torch.save(model.state_dict(), model_weights_filepath)
+    torch.save(model.state_dict(), model_weights_filepath)
+
+    plt.plot(LOSS)
+    plt.show()
 
 # train models
 if __name__ == "__main__":
-    train_model("HW8/default_dataset.pkl")
+    train_model(dataset_filepath)
