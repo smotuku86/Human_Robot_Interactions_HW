@@ -8,6 +8,8 @@ from objects import objects
 from models import MLPPolicy
 import torch
 
+model_weights_filepath = "HW9/model_weights/default_dataset_weights"
+
 # parameters
 control_dt = 1. / 240.
 
@@ -37,11 +39,12 @@ panda = Panda(basePosition=[0, 0, 0],
 
 # load the trained model
 model = MLPPolicy(state_dim=6, hidden_dim=32, action_dim=3)
-model.load_state_dict(torch.load('model_weights'))
+model.load_state_dict(torch.load(model_weights_filepath))
 model.eval()
-
+score = 0
+n_tests = 10
 # main loop
-for idx in range(10):
+for idx in range(n_tests):
 
     # reset the robot
     panda.reset(jointStartPositions)
@@ -54,8 +57,12 @@ for idx in range(10):
     robot_positions.append(np.copy(prev_pos))
     robot_positions.append(np.copy(prev_pos))
 
+    #get initial pos of cabinet handle 
+    initial_cabinet_state = cabinet.get_state()
+    initial_cabinet_handle_position = initial_cabinet_state["handle_position"][0] # get x cord - it only travels in that direction
+
     # rollout the learned policy
-    for idx in range(1000):
+    for idx in range(2000):
         # get the robot's position
         robot_state = panda.get_state()
         robot_pos = np.array(robot_state["ee-position"])
@@ -71,5 +78,19 @@ for idx in range(10):
 
         # move the robot with action
         panda.move_to_pose(robot_pos + action, ee_rotz=0, positionGain=0.01)
+
+        #check if it completed task of opening cabinet
+        current_cabinet_state = cabinet.get_state()
+        cabinet_handle_position = current_cabinet_state["handle_position"][0]
+        handle_displacement = abs(cabinet_handle_position - initial_cabinet_handle_position)
+                                # shouldn't use abs bc if it goes back it could count
+        print(handle_displacement)
+        if handle_displacement >= .045: # expert example show .05 of handle displacement
+            score += 1
+            break
+
+
         p.stepSimulation()
         time.sleep(control_dt)
+
+print("Score:", score/n_tests * 100)

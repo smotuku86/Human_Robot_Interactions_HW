@@ -70,8 +70,15 @@ for idx in range(10):
                 dataset_history.append(robot_pos_history + cabinet_position.tolist() + action.tolist())
                 prev_pos = robot_pos
                 robot_positions.append(np.copy(prev_pos))
+            #check if it completed task of opening cabinet
+            current_cabinet_state = cabinet.get_state()
+            cabinet_handle_position = current_cabinet_state["handle_position"][0]
+            handle_displacement = cabinet_handle_position 
+            print(handle_displacement)
 
 # save the dataset of demonstrations
+'''
 pickle.dump(dataset, open("HW9/datasets/dataset.pkl", "wb"))
 pickle.dump(dataset_history, open("HW9/datasets/dataset_history.pkl", "wb"))
 print("dataset has this many state-action pairs:", len(dataset))
+'''

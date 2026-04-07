@@ -2,7 +2,17 @@ import torch
 import pickle
 from models import MLPPolicy
 from torch.utils.data import Dataset, DataLoader
+from pathlib import Path
 
+def get_filename_no_ext(filepath):
+    return Path(filepath).stem
+
+#train this dataset
+dataset_filepath = "HW9/datasets/default_dataset.pkl"
+dataset_name = get_filename_no_ext(dataset_filepath)
+
+#save trained model here
+model_weights_filepath = Path("HW9/model_weights") / f"{dataset_name}_weights"
 
 # import dataset for training
 class MyData(Dataset):
@@ -57,8 +67,8 @@ def train_model(loadname):
             
         if epoch % 10 == 0:
             print(epoch, loss.item())
-            torch.save(model.state_dict(), "model_weights")
+            torch.save(model.state_dict(), model_weights_filepath)
 
 # train models
 if __name__ == "__main__":
-    train_model("dataset.pkl")
+    train_model(dataset_filepath)
