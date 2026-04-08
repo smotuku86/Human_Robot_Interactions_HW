@@ -77,8 +77,7 @@ for idx in range(10):
             print(handle_displacement)
 
 # save the dataset of demonstrations
-'''
-pickle.dump(dataset, open("HW9/datasets/dataset.pkl", "wb"))
+
+pickle.dump(dataset, open("HW9/datasets/default_dataset.pkl", "wb"))
 pickle.dump(dataset_history, open("HW9/datasets/dataset_history.pkl", "wb"))
 print("dataset has this many state-action pairs:", len(dataset))
-'''

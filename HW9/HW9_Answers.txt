@@ -1,1 +1,4 @@
-default_data - default training - 30%
+default_data - default training - 29.68% 40.03% 28.45% - avg: 
+
+
+tweaked model naming convention - epoch_batchsize_LR_hiddendim_dataset_weights

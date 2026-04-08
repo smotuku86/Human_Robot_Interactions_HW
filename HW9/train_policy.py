@@ -8,11 +8,15 @@ def get_filename_no_ext(filepath):
     return Path(filepath).stem
 
 #train this dataset
-dataset_filepath = "HW9/datasets/default_dataset.pkl"
+dataset_filepath = "HW9/datasets/default_dataset_upsampled.pkl"
 dataset_name = get_filename_no_ext(dataset_filepath)
+epoch = 1000
+batchsize = 100
+learning_rate = .001
+hiddendim = 32
 
 #save trained model here
-model_weights_filepath = Path("HW9/model_weights") / f"{dataset_name}_weights"
+model_weights_filepath = Path("HW9/model_weights") / f"{epoch}_{batchsize}_{learning_rate}_{hiddendim}_upsampled_dataset_weights"
 
 # import dataset for training
 class MyData(Dataset):
@@ -30,21 +34,21 @@ class MyData(Dataset):
 
 
 # train model
-def train_model(loadname):
+def train_model(loadname, epoch, batchsize, learning_rate, hiddendim):
 
     # training parameters
     print("[-] training bc")
-    EPOCH = 100
-    LR = 0.01
+    EPOCH = epoch
+    LR = learning_rate
 
     # initialize model and optimizer
-    model = MLPPolicy(state_dim=6, hidden_dim=32, action_dim=3)
+    model = MLPPolicy(state_dim=6, hidden_dim=hiddendim, action_dim=3)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
     # initialize dataset
     print("[-] loading data: " + loadname)
     train_data = MyData(loadname)
-    BATCH_SIZE = int(len(train_data) / 10.)
+    BATCH_SIZE = batchsize
     print("my batch size is:", BATCH_SIZE)
     train_set = DataLoader(dataset=train_data, batch_size=BATCH_SIZE, shuffle=True)
 
@@ -71,4 +75,4 @@ def train_model(loadname):
 
 # train models
 if __name__ == "__main__":
-    train_model(dataset_filepath)
+    train_model(dataset_filepath, epoch, batchsize, learning_rate, hiddendim)

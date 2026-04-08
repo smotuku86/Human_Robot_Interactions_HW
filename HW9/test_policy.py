@@ -7,14 +7,15 @@ from robot import Panda
 from objects import objects
 from models import MLPPolicy
 import torch
+from tqdm import tqdm
 
-model_weights_filepath = "HW9/model_weights/default_dataset_weights"
+model_weights_filepath = "HW9/model_weights/1000_100_0.001_32_upsampled_dataset_weights"
 
 # parameters
 control_dt = 1. / 240.
 
 # create simulation and place camera
-physicsClient = p.connect(p.GUI)
+physicsClient = p.connect(p.DIRECT)
 p.setGravity(0, 0, -9.81)
 # disable keyboard shortcuts so they do not interfere with keyboard control
 p.configureDebugVisualizer(p.COV_ENABLE_KEYBOARD_SHORTCUTS, 0)
@@ -44,7 +45,7 @@ model.eval()
 score = 0
 n_tests = 10
 # main loop
-for idx in range(n_tests):
+for idx in tqdm(range(n_tests)):
 
     # reset the robot
     panda.reset(jointStartPositions)
@@ -60,7 +61,7 @@ for idx in range(n_tests):
     #get initial pos of cabinet handle 
     initial_cabinet_state = cabinet.get_state()
     initial_cabinet_handle_position = initial_cabinet_state["handle_position"][0] # get x cord - it only travels in that direction
-
+    handle_displacement = 0
     # rollout the learned policy
     for idx in range(2000):
         # get the robot's position
@@ -69,7 +70,7 @@ for idx in range(n_tests):
         if idx % 10 == 0:
             robot_positions.append(np.copy(robot_pos))
         robot_pos_history = robot_pos.tolist() + robot_positions[-1].tolist() +  robot_positions[-2].tolist()
-
+        #use above line for passing prev states to model
         # get the state
         state = torch.FloatTensor(robot_pos.tolist() + cabinet_position.tolist())
 
@@ -84,13 +85,12 @@ for idx in range(n_tests):
         cabinet_handle_position = current_cabinet_state["handle_position"][0]
         handle_displacement = abs(cabinet_handle_position - initial_cabinet_handle_position)
                                 # shouldn't use abs bc if it goes back it could count
-        print(handle_displacement)
-        if handle_displacement >= .045: # expert example show .05 of handle displacement
-            score += 1
-            break
-
-
+        #print(handle_displacement)
         p.stepSimulation()
         time.sleep(control_dt)
 
-print("Score:", score/n_tests * 100)
+    #at the end, increment score
+    score += min(1, handle_displacement / .05) #hardcode alert
+    # this is the most the handle can go out from .1 extentsion
+
+print("Score:", round(score/n_tests * 100,2))
