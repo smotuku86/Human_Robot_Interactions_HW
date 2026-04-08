@@ -1,4 +1,8 @@
-default_data - default training - 29.68% 40.03% 28.45% - avg: 
+how are models tested?
+
+each run, the score is how well it opened the cabinet. A range from 0-1 depending 
+on the ratio of amount opened to the amount that should have been opened.
 
 
+default_data - default training - 29.68% 40.03% 28.45% - avg: 32.72
 tweaked model naming convention - epoch_batchsize_LR_hiddendim_dataset_weights

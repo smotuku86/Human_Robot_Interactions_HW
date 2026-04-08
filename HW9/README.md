@@ -42,7 +42,7 @@ Complete the following steps:
 2. One idea for improving the policy is to "upsample" the given data. Using the `upsample_data.py` code, try building a larger dataset from your given dataset. Explain how this code works. When does it succeed, and when does it fail?
 3. Another idea for improving the policy is to condition on not just the robot's current state, but a state history. Modify the training pipeline so that the robot reasons over this state history at runtime. Does it improve your policy? Explain why this method could help or hurt your learned policy.
 
-    use dataset_history - will need to change input dim on model from 3 to 9 along with the lines about states from 0:6 to like 0:18
+    use dataset_history - will need to change input dim on model from 3 to 9 along with the lines about states from 0:6 to like 0:12
 
 4. Develop your own method for improving the robot's learned policy. This could be your own idea, or perhaps a combination of steps 2 and 3. You could experiment with other model structures and loss functions. Report the effectiveness of your proposed method, and explain why it did or did not work.
 
