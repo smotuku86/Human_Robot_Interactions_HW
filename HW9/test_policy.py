@@ -9,13 +9,13 @@ from models import MLPPolicy
 import torch
 from tqdm import tqdm
 
-model_weights_filepath = "HW9/model_weights/1000_100_0.001_32_upsampled_dataset_weights"
+model_weights_filepath = "HW9/model_weights/700_50_0.01_64_upsampled_datasetwhistory_weights"
 
 # parameters
 control_dt = 1. / 240.
 
 # create simulation and place camera
-physicsClient = p.connect(p.DIRECT)
+physicsClient = p.connect(p.GUI)
 p.setGravity(0, 0, -9.81)
 # disable keyboard shortcuts so they do not interfere with keyboard control
 p.configureDebugVisualizer(p.COV_ENABLE_KEYBOARD_SHORTCUTS, 0)
@@ -39,7 +39,7 @@ panda = Panda(basePosition=[0, 0, 0],
                 jointStartPositions=jointStartPositions)
 
 # load the trained model
-model = MLPPolicy(state_dim=6, hidden_dim=32, action_dim=3)
+model = MLPPolicy(state_dim=12, hidden_dim=64, action_dim=3)
 model.load_state_dict(torch.load(model_weights_filepath))
 model.eval()
 score = 0
@@ -72,7 +72,10 @@ for idx in tqdm(range(n_tests)):
         robot_pos_history = robot_pos.tolist() + robot_positions[-1].tolist() +  robot_positions[-2].tolist()
         #use above line for passing prev states to model
         # get the state
-        state = torch.FloatTensor(robot_pos.tolist() + cabinet_position.tolist())
+        # state = torch.FloatTensor(robot_pos.tolist() + cabinet_position.tolist())
+
+        #history version
+        state = torch.FloatTensor(robot_pos_history + cabinet_position.tolist())
 
         # use the learned policy to output an action
         action = 10 * model(torch.FloatTensor(state)).detach().numpy()

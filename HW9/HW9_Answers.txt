@@ -1,8 +1,55 @@
 how are models tested?
-
 each run, the score is how well it opened the cabinet. A range from 0-1 depending 
 on the ratio of amount opened to the amount that should have been opened.
 
+1.
 
-default_data - default training - 29.68% 40.03% 28.45% - avg: 32.72
-tweaked model naming convention - epoch_batchsize_LR_hiddendim_dataset_weights
+default_data - default training - 29.68% 40.03% 28.45% - avg: 32.72%
+
+tweaked model naming convention - 
+epoch_batchsize_LR_hiddendim_dataset_weights
+1000_100_0.001_32_dataset_weights - 62.91% 52.14% 49.21% - avg 54.75%
+100_10_0.001_64_dataset_weights - 51.57% 60.13% 56.01% - avg 55.90%
+100_10_0.001_128_dataset_weights - 24.03% 31.71% 33.55% - avg 29.76% 
+100_10_0.01_32_dataset_weights - 98.47% 76.25% 86.46% - avg 87.06%
+
+Increasing batch size and epochs (training time) kinda helped, but increasing the learning 
+Rate did a miracle. The results jumped from 55% succss to near 90%. This might be because 
+increasing initial learning rate increase exploration at teh start, and then ADAM will tune 
+that LR down as it trains more so it ends up learning a nice generalized policy.
+
+2. 
+
+Upsampling is basicaly when you take a dataset, and add to it by slightly modifiing the exsisting data.
+Our upsampling adds noise to the states and actiosn that make it go back to the original state action pairs, 
+as if it was correcting the noisy behavior. 
+
+1000_100_0.01_32_upsampled_dataset_weights - 0% 0% 0% - avg 0%
+    It went to the right place, and sat still - the upsampled exemplized the stall between movemnts and it is 
+    stuck there. 
+100_10_0.01_32_upsampled_dataset_weights - 90% 79.2% 76.96% - avg - 82.05%
+200_10_0.01_32_upsampled_dataset_weights - 0% 0% 0% - avg 0%
+    same issue as above...
+200_50_0.01_64_upsampled_dataset_weights - 0% 0% 0% - avg 0%
+    same issue as above... but sometime went down and stopped
+
+3. 
+
+More context should help the robot get unstuck
+
+100_10_0.01_64_datasetwhistory_weights - 25.44% 23.53% 62.12% - avg 37.03%
+200_10_0.01_64_datasetwhistory_weights - 10.33% 25.63% 23.34% - avg 19.76%
+200_20_0.015_64_upsampled_datasetwhistory_weights - 90% 40.5% 52.0% - avg 60.83%
+    woah, but not consistant - more training
+400_40_0.01_64_upsampled_datasetwhistory_weights - 80% 90% 80% - avg 83.33%
+    great, fast, but fails by clipping the box
+500_50_0.01_64_upsampled_datasetwhistory_weights - 60.9% 60.51% 60.49% - 60.63%
+    0.0 this thing repeated the opening actions
+    all tests opened cabinets, just not fully but really interesting learned behavior
+    check "the repeater"
+700_50_0.01_64_upsampled_datasetwhistory_weights - 99.1% 98.4% 99.64% - 99.04%
+
+This "700_50_0.01_64_upsampled_datasetwhistory_weights" set preformed very well. Here's what I did:
+took the regular dataset with histroy and upsampled it with data taht had .025 m of vairaint. 
+That data was then put throught training at 700 epochs with a batch size of 50 and a learning 
+rate of .01, all traimed on a model with a 64x3 layer hidden network.

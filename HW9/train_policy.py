@@ -8,15 +8,15 @@ def get_filename_no_ext(filepath):
     return Path(filepath).stem
 
 #train this dataset
-dataset_filepath = "HW9/datasets/default_dataset_upsampled.pkl"
+dataset_filepath = "HW9/datasets/dataset_history_upsampled.pkl"
 dataset_name = get_filename_no_ext(dataset_filepath)
-epoch = 1000
-batchsize = 100
-learning_rate = .001
-hiddendim = 32
+epoch = 700
+batchsize = 50
+learning_rate = .01
+hiddendim = 64
 
 #save trained model here
-model_weights_filepath = Path("HW9/model_weights") / f"{epoch}_{batchsize}_{learning_rate}_{hiddendim}_upsampled_dataset_weights"
+model_weights_filepath = Path("HW9/model_weights") / f"{epoch}_{batchsize}_{learning_rate}_{hiddendim}_upsampled_datasetwhistory_weights"
 
 # import dataset for training
 class MyData(Dataset):
@@ -42,7 +42,7 @@ def train_model(loadname, epoch, batchsize, learning_rate, hiddendim):
     LR = learning_rate
 
     # initialize model and optimizer
-    model = MLPPolicy(state_dim=6, hidden_dim=hiddendim, action_dim=3)
+    model = MLPPolicy(state_dim=12, hidden_dim=hiddendim, action_dim=3)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
     # initialize dataset
@@ -57,8 +57,10 @@ def train_model(loadname, epoch, batchsize, learning_rate, hiddendim):
         for batch, x in enumerate(train_set):
         
             # collect the demonstrated states and actions
-            states = x[:, 0:6]
-            actions = x[:, 6:9]
+            # states = x[:, 0:6]
+            # actions = x[:, 6:9]
+            states = x[:, 0:12]
+            actions = x[:, 12:15]
             actions_hat = model(states)
 
             # compute the loss between actual and predicted
