@@ -13,16 +13,20 @@ epoch_batchsize_LR_hiddendim_dataset_weights
 100_10_0.001_128_dataset_weights - 24.03% 31.71% 33.55% - avg 29.76% 
 100_10_0.01_32_dataset_weights - 98.47% 76.25% 86.46% - avg 87.06%
 
-Increasing batch size and epochs (training time) kinda helped, but increasing the learning 
-Rate did a miracle. The results jumped from 55% succss to near 90%. This might be because 
-increasing initial learning rate increase exploration at teh start, and then ADAM will tune 
-that LR down as it trains more so it ends up learning a nice generalized policy.
+Increasing the batch size and number of epochs (training time) helped somewhat, but increasing
+the learning rate made a dramatic difference. The results jumped from 55% success to nearly 90%.
+
+This might be because increasing the initial learning rate improves exploration at the start,
+and then Adam gradually tunes that learning rate down during training, allowing it to learn a
+well-generalized policy.
 
 2. 
 
-Upsampling is basicaly when you take a dataset, and add to it by slightly modifiing the exsisting data.
-Our upsampling adds noise to the states and actiosn that make it go back to the original state action pairs, 
-as if it was correcting the noisy behavior. 
+Upsampling is basically when you take a dataset and add to it by slightly modifying the
+existing data.
+
+Our upsampling method adds noise to the states and actions, creating samples that guide the
+model back toward the original state-action pairs, as if it were correcting noisy behavior.
 
 1000_100_0.01_32_upsampled_dataset_weights - 0% 0% 0% - avg 0%
     It went to the right place, and sat still - the upsampled exemplized the stall between movemnts and it is 
@@ -49,7 +53,8 @@ More context should help the robot get unstuck
     check "the repeater"
 700_50_0.01_64_upsampled_datasetwhistory_weights - 99.1% 98.4% 99.64% - 99.04%
 
-This "700_50_0.01_64_upsampled_datasetwhistory_weights" set preformed very well. Here's what I did:
-took the regular dataset with histroy and upsampled it with data taht had .025 m of vairaint. 
-That data was then put throught training at 700 epochs with a batch size of 50 and a learning 
-rate of .01, all traimed on a model with a 64x3 layer hidden network.
+This "700_50_0.01_64_upsampled_datasetwhistory_weights" set performed very well. Here's what I did:
+I took the regular dataset with history and upsampled it using data with 0.025 m of variance.
+
+The resulting dataset was trained for 700 epochs with a batch size of 50 and a learning rate
+of 0.01, using a model with a 64x3 hidden-layer network.
