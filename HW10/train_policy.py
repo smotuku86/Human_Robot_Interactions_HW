@@ -24,8 +24,8 @@ def train_model(loadname):
 
     # training parameters
     print("[-] training autoencoder")
-    EPOCH = 1000
-    LR = 0.001
+    EPOCH = 2000
+    LR = 0.01
 
     # initialize model and optimizer
     model = Autoencoder(state_dim=15, hidden_dim=128, action_dim=9, latent_dim=1)
@@ -61,4 +61,4 @@ def train_model(loadname):
 
 # train models
 if __name__ == "__main__":
-    train_model("dataset.pkl")
+    train_model("HW10/dataset.pkl")

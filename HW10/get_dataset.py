@@ -37,7 +37,9 @@ panda = Panda(basePosition=[0, 0, 0],
 # main loop
 offset1 = np.array([0.0, 0.0, 0.2])      # reach above the cylinder
 offset2 = np.array([0.0, 0.0, 0.0])      # grab the cylinder
-offset3 = np.array([-0.3, 0.0, 0.1])     # bring it closer
+offset3 = np.array([-0.3, 0.0, 0.1])     # bring it closer 
+     #add offset to have multiple like go forward,back,left,right
+     #then have the stage 2 choose a random offset in this
 offset = [offset1, offset2, offset3]
 timesteps = [401, 201, 401]
 dataset = []
