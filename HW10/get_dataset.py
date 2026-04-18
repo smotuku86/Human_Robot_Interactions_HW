@@ -6,6 +6,7 @@ import time
 from robot import Panda
 from objects import objects
 import pickle
+from tqdm import tqdm
 
 # parameters
 control_dt = 1. / 240.
@@ -38,12 +39,15 @@ panda = Panda(basePosition=[0, 0, 0],
 offset1 = np.array([0.0, 0.0, 0.2])      # reach above the cylinder
 offset2 = np.array([0.0, 0.0, 0.0])      # grab the cylinder
 offset3 = np.array([-0.3, 0.0, 0.1])     # bring it closer 
+offset4 = np.array([0.3, 0.0, 0.1])     # bring it farther 
+offset5 = np.array([0.0, -0.3, 0.1])     # bring it to the right 
+offset6 = np.array([0.0, 0.3, 0.1])     # bring it to the left 
      #add offset to have multiple like go forward,back,left,right
      #then have the stage 2 choose a random offset in this
-offset = [offset1, offset2, offset3]
-timesteps = [401, 201, 401]
+offset = [offset1, offset2, offset3, offset4, offset5, offset6]
+timesteps = [401, 201, 401, 401, 401, 401]
 dataset = []
-for idx in range(10):
+for idx in tqdm(range(50)):
 
     # reset the robot
     panda.reset(jointStartPositions)
@@ -52,6 +56,9 @@ for idx in range(10):
     p.resetBasePositionAndOrientation(cylinder.object, cylinder_position, p.getQuaternionFromEuler([0, 0, 0]))
     gripper_state = [-1.0]
 
+    #pick which way to go randomly
+    moving_stage = np.random.randint(2, 6)
+    path_offsets = [ offset[0], offset[1], offset[moving_stage] ]
     # perform the expert behavior
     trajectory = []
     for stage in range(3):
@@ -64,11 +71,11 @@ for idx in range(10):
                     p.stepSimulation()
                     time.sleep(control_dt)
             # move to the goal position
-            panda.move_to_pose(cylinder_position + offset[stage], 
+            panda.move_to_pose(cylinder_position + path_offsets[stage], 
                                 ee_quaternion=p.getQuaternionFromEuler([np.pi/2, np.pi/2, np.pi]), positionGain=0.01)
             p.stepSimulation()
             time.sleep(control_dt)
-            if idx % 10 == 0:
+            if idx % 2 == 0:
                 robot_state = panda.get_state()
                 robot_pos = np.array(robot_state["joint-position"])
                 trajectory.append(robot_pos.tolist() + gripper_state + cylinder_position.tolist())
@@ -82,5 +89,5 @@ for idx in range(10):
     dataset += trajectory_actions1.tolist() + trajectory_actions2.tolist()
 
 # save the dataset of demonstrations
-pickle.dump(dataset, open("dataset.pkl", "wb"))
+pickle.dump(dataset, open("HW10/datasets/dataset_50L_movingXY.pkl", "wb"))
 print("dataset has this many state-action pairs:", len(dataset))

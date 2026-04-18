@@ -12,9 +12,9 @@ def get_filename_no_ext(filepath):
 dataset_filepath = "HW10/datasets/dataset_50L_movingXY.pkl"
 dataset_name = get_filename_no_ext(dataset_filepath)
 epoch = 1000
-batchsize = 200
+batchsize = 1000
 learning_rate = .001
-hiddendim = 64
+hiddendim = 1024
 latentdim = 3
 
 #save trained model here
@@ -37,14 +37,23 @@ class MyData(Dataset):
 
 # train model
 def train_model(loadname,  epoch, batchsize, learning_rate, hiddendim, latentdim):
+    # select the device to train on
+    # use cpu if gpu is not available
+    if torch.cuda.is_available():
+        DEVICE = torch.device("cuda")
+    elif torch.backends.mps.is_available():
+        DEVICE = torch.device("mps")
+    else:
+        DEVICE = torch.device("cpu")
 
     # training parameters
     print("[-] training autoencoder")
+    print(f"[-] device: {DEVICE}")
     EPOCH = epoch
     LR = learning_rate
 
     # initialize model and optimizer
-    model = Autoencoder(state_dim=15, hidden_dim=hiddendim, action_dim=9, latent_dim=latentdim)
+    model = Autoencoder(state_dim=15, hidden_dim=hiddendim, action_dim=9, latent_dim=latentdim).to(DEVICE)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
     # initialize dataset
@@ -52,12 +61,17 @@ def train_model(loadname,  epoch, batchsize, learning_rate, hiddendim, latentdim
     train_data = MyData(loadname)
     BATCH_SIZE = batchsize #int(len(train_data) / 10.)
     print("my batch size is:", BATCH_SIZE)
-    train_set = DataLoader(dataset=train_data, batch_size=BATCH_SIZE, shuffle=True)
+    train_set = DataLoader(
+        dataset=train_data,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        pin_memory=torch.cuda.is_available(),
+    )
 
     # main training loop
-    for epoch in tqdm(range(EPOCH+1)):
-        for batch, x in enumerate(train_set):
-        
+    for ep in tqdm(range(EPOCH + 1)):
+        for _, x in enumerate(train_set):
+            x = x.to(DEVICE, non_blocking=torch.cuda.is_available())
             # collect the demonstrated states and actions
             states = x[:, 0:15]
             actions = x[:, 15:24]
@@ -71,8 +85,8 @@ def train_model(loadname,  epoch, batchsize, learning_rate, hiddendim, latentdim
             loss.backward()
             optimizer.step()
             
-        if epoch % 1000 == 0:
-            print(epoch, loss.item())
+        if ep % 1000 == 0:
+            print(ep, loss.item())
             torch.save(model.state_dict(), model_weights_filepath)
 
 

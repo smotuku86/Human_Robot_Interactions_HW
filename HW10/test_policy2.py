@@ -11,7 +11,7 @@ import torch
 
 
 #model weights
-model_weights_filepath = "HW10/model weights/10000_200_0.001_128_2_weights"
+model_weights_filepath = "HW10/model weights/1000_100_0.001_128_6_dataset_50L_movingXY_weights"
 
 # parameters
 control_dt = 1. / 240.
@@ -41,7 +41,7 @@ panda = Panda(basePosition=[0, 0, 0],
                 jointStartPositions=jointStartPositions)
 
 # load the trained model
-model = Autoencoder(state_dim=15, hidden_dim=1024, action_dim=9, latent_dim=3)
+model = Autoencoder(state_dim=15, hidden_dim=128, action_dim=9, latent_dim=6)
 model.load_state_dict(torch.load(model_weights_filepath))
 model.eval()
 
@@ -72,10 +72,11 @@ while True:
 
     # get the full state
     state = robot_pos.tolist() + gripper_state + cylinder_position.tolist()
-    
+    disp2cyl = np.linalg.norm(np.array(robot_state['ee-position']) - cylinder_position)
+    #print("disp2cyl:", disp2cyl, type(disp2cyl), np.shape(disp2cyl))
     # use the learned policy to output an action
     state_t = torch.FloatTensor([state])
-    z_t = torch.FloatTensor([[500 * action[0], action[6],0]])
+    z_t = torch.FloatTensor([[500 * action[0], gripper_state[0], disp2cyl]])
     action = 0.1 * model.decoder(state_t, z_t).detach().numpy()[0]
 
 

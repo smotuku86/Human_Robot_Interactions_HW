@@ -39,7 +39,7 @@ class Autoencoder(nn.Module):
         x = torch.tanh(self.dec_1(x))
         x = torch.tanh(self.dec_2(x))
 
-        return 0.1 * self.dec_3(x) #this is like velocity - and it shoudl be fine without tanh
+        return 0.1 * torch.tanh(self.dec_3(x)) #this is like velocity - and it shoudl be fine without tanh
     
     # autoencoder
     def forward(self, state, action):
