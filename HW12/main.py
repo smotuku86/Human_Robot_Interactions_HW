@@ -1,6 +1,7 @@
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+import tqdm as tqdm
 
 
 ### states are vectors with 4 dimensions:
@@ -43,22 +44,25 @@ def plot_state_action(state, action):
 	# plot the vector for the action
 	plt.plot([state[0], state[0]+action[0]], [state[1], state[1]+action[1]], 'b-')
 	plt.axis("equal")
-	plt.savefig("state_action.png")
+	plt.savefig("HW12/visualizations/state_action20x.png")
 
 ### first pass solution (you will want to improve on this...)
 def get_dataset():
 	dataset = []
-	for _ in range(100):
+	for _ in tqdm.tqdm(range(20)):
 		# pick a state uniformly at random
 		state = np.random.uniform(-10, 10, 4)
-		# calculate action towards closest goal
-		action = get_action(state)
-		# add the state-action pair to the dataset
-		add_to_dataset(dataset, state, action)
-		# # plot the state-action pair
-		plot_state_action(state, action)
+		for idx in range(20):
+			# calculate action towards closest goal
+			action = get_action(state)
+			# add the state-action pair to the dataset
+			add_to_dataset(dataset, state, action)
+			# # plot the state-action pair
+			plot_state_action(state, action)
+			# get the next state from the dynamics
+			state = dynamics(state, action)
 
-	pickle.dump(dataset, open("HW12/datasets/dataset.pkl", "wb"))
+	pickle.dump(dataset, open("HW12/datasets/dataset2020.pkl", "wb"))
 	print("dataset has this many state-action pairs:", len(dataset))
 
 if __name__ == "__main__":

@@ -3,11 +3,12 @@ import numpy as np
 from models import MLPPolicy
 from main import dynamics
 import matplotlib.pyplot as plt
+import tqdm as tqdm
 
 
 # load the trained model
 model0 = MLPPolicy(state_dim=4, hidden_dim=64, action_dim=2)
-model0.load_state_dict(torch.load('HW12/model_weights/model_weights0'))
+model0.load_state_dict(torch.load('HW12/model_weights/model_weightsx0'))
 model0.eval()
 
 # plot the trajectory the mobile robot executes
@@ -16,12 +17,12 @@ def plot_trajectory(xi):
     plt.plot(xi[0,0], xi[0,1], 'ks')
     plt.plot(xi[0,2], xi[0,3], 'ro')
     plt.axis("equal")
-    plt.savefig("xi.png")
+    plt.savefig("HW12/visualizations/xi20x.png")
 
 # main loop
 n_tests = 100
 average_goal_error = 0
-for idx in range(n_tests):
+for idx in tqdm.tqdm(range(n_tests)):
 
     # reset the system
     initial_state = np.random.uniform(-10, 10, 4)
@@ -43,7 +44,7 @@ for idx in range(n_tests):
     average_goal_error += np.linalg.norm(state[0:2]-state[2:4]) / n_tests
 
     # # plot the trajectory
-    # xi = np.array(xi)
-    # plot_trajectory(xi)
+    xi = np.array(xi)
+    plot_trajectory(xi)
 
 print("here is my average error from the closest goal:", np.round(average_goal_error, 2))

@@ -57,8 +57,8 @@ def train_model(loadname, savenumber):
             
         if epoch % 10 == 0:
             print(epoch, loss.item())
-            torch.save(model.state_dict(), "HW12/model_weights/model_weights" + str(savenumber))
+            torch.save(model.state_dict(), "HW12/model_weights/model_weightsx" + str(savenumber))
 
 # train models
 if __name__ == "__main__":
-    train_model("HW12/datasets/dataset.pkl", 0)
+    train_model("HW12/datasets/dataset20x.pkl", 0)
