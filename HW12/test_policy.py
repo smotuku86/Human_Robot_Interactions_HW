@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # load the trained model
 model0 = MLPPolicy(state_dim=4, hidden_dim=64, action_dim=2)
-model0.load_state_dict(torch.load('model_weights0'))
+model0.load_state_dict(torch.load('HW12/model_weights/model_weights0'))
 model0.eval()
 
 # plot the trajectory the mobile robot executes

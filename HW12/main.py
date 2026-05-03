@@ -56,9 +56,9 @@ def get_dataset():
 		# add the state-action pair to the dataset
 		add_to_dataset(dataset, state, action)
 		# # plot the state-action pair
-		# plot_state_action(state, action)
+		plot_state_action(state, action)
 
-	pickle.dump(dataset, open("dataset.pkl", "wb"))
+	pickle.dump(dataset, open("HW12/datasets/dataset.pkl", "wb"))
 	print("dataset has this many state-action pairs:", len(dataset))
 
 if __name__ == "__main__":
